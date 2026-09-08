@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const DEADLINE = process.env.NEXT_PUBLIC_RSVP_DEADLINE || "30 September 2026";
+import { RSVP_DEADLINE } from "@/lib/deadline";
 
 export default function Header({
   active,
@@ -49,7 +48,7 @@ export default function Header({
         </div>
         <div className="flex-1" />
         <div className="hidden md:block text-[15.5px] text-maroon font-semibold">
-          RSVP by {DEADLINE}
+          RSVP by {RSVP_DEADLINE}
         </div>
         <div className="hidden md:block text-[15.5px] text-inkMuted">{guestName}</div>
         <button

@@ -26,6 +26,20 @@ interface AdminRow {
   submittedAt: string | null;
 }
 
+interface ContentBlock {
+  title: string;
+  body: string;
+}
+
+const CONTENT_KEYS = ["getting_there", "where_to_stay", "our_story", "family_helpline"] as const;
+type ContentKey = (typeof CONTENT_KEYS)[number];
+const CONTENT_LABELS: Record<ContentKey, string> = {
+  getting_there: "Getting there",
+  where_to_stay: "Where to stay",
+  our_story: "Our story",
+  family_helpline: "Family helpline (title = name, body = phone)",
+};
+
 interface Stats {
   guests: number;
   kirtan: number;
@@ -53,6 +67,9 @@ export default function AdminApp() {
   const [roomsRevealed, setRoomsRevealed] = useState(false);
   const [roomsRevealedLoaded, setRoomsRevealedLoaded] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [content, setContent] = useState<Record<ContentKey, ContentBlock> | null>(null);
+  const [contentSaving, setContentSaving] = useState<ContentKey | null>(null);
+  const [contentSaved, setContentSaved] = useState<ContentKey | null>(null);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -65,6 +82,35 @@ export default function AdminApp() {
     setStats(data.stats || null);
     setLock("open");
     loadRoomsRevealed();
+    loadContent();
+  }
+
+  async function loadContent() {
+    const res = await fetch("/api/admin/content");
+    if (res.ok) {
+      const data = await res.json();
+      setContent(data.content || null);
+    }
+  }
+
+  function editContent(key: ContentKey, field: "title" | "body", value: string) {
+    setContent((c) => (c ? { ...c, [key]: { ...c[key], [field]: value } } : c));
+  }
+
+  async function saveContent(key: ContentKey) {
+    if (!content) return;
+    setContentSaving(key);
+    setContentSaved(null);
+    const res = await fetch("/api/admin/content", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, title: content[key].title, body: content[key].body }),
+    });
+    setContentSaving(null);
+    if (res.ok) {
+      setContentSaved(key);
+      setTimeout(() => setContentSaved(null), 2000);
+    }
   }
 
   async function loadRoomsRevealed() {
@@ -241,6 +287,51 @@ export default function AdminApp() {
                 </div>
               </div>
             )}
+            {content && (
+              <div className="mb-6 bg-creamCard border border-border rounded-sm p-5">
+                <div className="text-[15.5px] text-inkSoft font-medium mb-1">
+                  Footer &amp; intro copy
+                </div>
+                <div className="text-[14px] text-inkMuted mb-4">
+                  Shown at the bottom of every guest&apos;s page. Edit and save each block below.
+                </div>
+                <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))" }}>
+                  {CONTENT_KEYS.map((key) => (
+                    <div key={key}>
+                      <label className="block text-sm tracking-[.14em] uppercase text-inkMuted mb-1.5">
+                        {CONTENT_LABELS[key]}
+                      </label>
+                      <input
+                        value={content[key].title}
+                        onChange={(e) => editContent(key, "title", e.target.value)}
+                        placeholder="Title"
+                        className="w-full p-2.5 mb-1.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                      />
+                      <textarea
+                        value={content[key].body}
+                        onChange={(e) => editContent(key, "body", e.target.value)}
+                        rows={key === "family_helpline" ? 1 : 4}
+                        placeholder="Body"
+                        className="w-full p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                      />
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <button
+                          onClick={() => saveContent(key)}
+                          disabled={contentSaving === key}
+                          className="px-3 py-1.5 bg-maroon text-cream border-none rounded-[2px] text-[12.5px] tracking-[.12em] uppercase cursor-pointer disabled:opacity-60"
+                        >
+                          {contentSaving === key ? "Saving…" : "Save"}
+                        </button>
+                        {contentSaved === key && (
+                          <span className="text-[13px] text-[#4E7A3A]">Saved.</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div
               className="grid gap-3.5 mb-6"
               style={{ gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))" }}

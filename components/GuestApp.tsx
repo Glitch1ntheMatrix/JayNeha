@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { EVENT_MAP, ATTIRE, WEDDING_DATE_ISO } from "@/lib/events";
 import { EventKey, GuestSession, RsvpAnswer } from "@/lib/types";
+import { SiteContent } from "@/lib/content";
 import Header from "./Header";
+import Footer from "./Footer";
 
 type OpenState = Partial<Record<EventKey, 0 | 1>>;
 
@@ -12,7 +14,13 @@ function daysUntilWedding(): number {
   return Math.max(0, Math.ceil(ms / 86400000));
 }
 
-export default function GuestApp({ initialGuest }: { initialGuest: GuestSession }) {
+export default function GuestApp({
+  initialGuest,
+  content,
+}: {
+  initialGuest: GuestSession;
+  content: SiteContent;
+}) {
   const [guest, setGuest] = useState<GuestSession>(initialGuest);
   const [open, setOpen] = useState<OpenState>({});
   const [selected, setSelected] = useState<EventKey | null>(null);
@@ -447,6 +455,8 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
           </div>
         </div>
       </div>
+
+      <Footer content={content} />
 
       {selEv && (
         <div
