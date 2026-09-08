@@ -29,6 +29,14 @@ export default async function StyleGuidePage() {
           className="block w-full h-auto"
           style={{ boxShadow: "0 18px 44px rgba(90,60,30,.16)" }}
         />
+        <div className="flex justify-center mt-8">
+          <Link
+            href="/home"
+            className="px-5 py-[11px] border border-maroon rounded-[2px] text-maroon text-sm tracking-[.16em] uppercase no-underline"
+          >
+            Close
+          </Link>
+        </div>
       </div>
     </div>
   );
