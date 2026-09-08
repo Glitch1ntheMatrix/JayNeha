@@ -162,6 +162,11 @@ export default function AdminApp() {
   async function cycleEventAnswer(row: AdminRow, key: EventKey) {
     const current = row.events[key] ?? null;
     const next: RsvpAnswer | null = current === null ? "yes" : current === "yes" ? "no" : null;
+    const nextLabel = next === "yes" ? "Yes" : next === "no" ? "No" : "Pending (clear the answer)";
+    const confirmed = window.confirm(
+      `Set ${row.name}’s RSVP for ${EVENT_MAP[key].name} to "${nextLabel}"?\n\nThis records the RSVP on the guest’s behalf.`
+    );
+    if (!confirmed) return;
     setRows((rs) =>
       rs.map((r) =>
         r.id === row.id
