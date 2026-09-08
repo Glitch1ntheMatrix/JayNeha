@@ -29,10 +29,6 @@ export default function GuestApp({
   const [modalClosing, setModalClosing] = useState(false);
   const [cardPage, setCardPage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lens, setLens] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
-  const ZOOM = 2.5;
-  const LENS_SIZE = 150;
-  const [hoverCapable, setHoverCapable] = useState(false);
   const [cdDays, setCdDays] = useState<number>(daysUntilWedding());
   const [details, setDetails] = useState({
     meal: initialGuest.rsvp.meal,
@@ -110,15 +106,8 @@ export default function GuestApp({
       setSelected(null);
       setModalClosing(false);
       setLightboxOpen(false);
-      setLens(null);
     }, 200);
   }
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.matchMedia) {
-      setHoverCapable(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
-    }
-  }, []);
 
   async function answer(key: EventKey, value: RsvpAnswer) {
     // optimistic update
@@ -579,19 +568,8 @@ export default function GuestApp({
             </button>
             <div>
               <div
-                className={`relative rounded shadow-lg overflow-hidden ${hoverCapable ? "cursor-zoom-in" : ""}`}
+                className="relative rounded shadow-lg overflow-hidden cursor-zoom-in"
                 style={{ perspective: 1400 }}
-                onMouseMove={(e) => {
-                  if (!hoverCapable) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setLens({
-                    x: Math.min(Math.max(e.clientX - rect.left, 0), rect.width),
-                    y: Math.min(Math.max(e.clientY - rect.top, 0), rect.height),
-                    w: rect.width,
-                    h: rect.height,
-                  });
-                }}
-                onMouseLeave={() => setLens(null)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -605,26 +583,8 @@ export default function GuestApp({
                   className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/45 text-cream text-[11px] tracking-[.06em] uppercase pointer-events-none"
                   aria-hidden="true"
                 >
-                  🔍 {hoverCapable ? "Hover or tap to zoom" : "Tap to zoom"}
+                  🔍 Tap to zoom
                 </div>
-                {hoverCapable && lens && (
-                  <div
-                    className="absolute rounded-full pointer-events-none border-2 border-white shadow-lg"
-                    style={{
-                      width: LENS_SIZE,
-                      height: LENS_SIZE,
-                      left: lens.x - LENS_SIZE / 2,
-                      top: lens.y - LENS_SIZE / 2,
-                      backgroundImage: `url(${cardPages[cardPage]})`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: `${lens.w * ZOOM}px ${lens.h * ZOOM}px`,
-                      backgroundPosition: `${-(lens.x * ZOOM - LENS_SIZE / 2)}px ${-(
-                        lens.y * ZOOM -
-                        LENS_SIZE / 2
-                      )}px`,
-                    }}
-                  />
-                )}
                 {cardPages.length > 1 && (
                   <>
                     {cardPage > 0 && (
