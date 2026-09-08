@@ -94,7 +94,10 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
       <Header active="home" guestName={guest.name} />
 
       <div className="max-w-[1160px] mx-auto px-[22px] pt-9 md:pt-[clamp(38px,6vw,76px)] pb-10">
-        <div className="text-sm tracking-[.34em] uppercase text-brown font-medium">Namaste</div>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <div className="text-sm tracking-[.34em] uppercase text-brown font-medium">Namaste</div>
+          <div className="text-sm text-inkMuted">RSVP by {DEADLINE}</div>
+        </div>
         <h1 className="font-display text-[clamp(35px,5.6vw,54px)] leading-[1.05] my-3.5 text-maroon font-normal">
           {firstName}
         </h1>
@@ -396,10 +399,6 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
             {savingDetails ? "Saving…" : savedDetails ? "Saved." : "Your answers are saved automatically as you go."}
           </div>
         </div>
-      </div>
-
-      <div className="max-w-[1160px] mx-auto px-[22px] py-16 text-[14.5px] text-inkMuted">
-        RSVP by {DEADLINE}
       </div>
 
       {selEv && (
