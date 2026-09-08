@@ -95,6 +95,7 @@ export const EVENTS: EventDef[] = [
     venue: "Lobby & Vaayuvan Terrace",
     place: "Ikshana Resort, Lonavala",
     card: "/cards/pheras.jpg",
+    cards: ["/cards/pheras-1.jpg", "/cards/pheras.jpg"],
     thumb: "/cards/thumbs/pheras.jpg",
     accent: "#A02234",
     accentDark: "#6B1220",

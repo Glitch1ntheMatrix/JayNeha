@@ -93,6 +93,21 @@ img {
   animation: njSeal 0.34s cubic-bezier(0.4, 0, 0.4, 1) forwards;
 }
 
+@keyframes njCardPage {
+  from {
+    opacity: 0;
+    transform: rotateY(-14deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+.nj-card-page {
+  animation: njCardPage 0.46s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  transform-origin: left center;
+}
+
 .nj-envelope-flap {
   transition: transform 0.82s cubic-bezier(0.4, 0.05, 0.25, 1) 0.05s;
   transform-origin: top center;

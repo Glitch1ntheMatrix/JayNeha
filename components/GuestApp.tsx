@@ -16,6 +16,7 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
   const [guest, setGuest] = useState<GuestSession>(initialGuest);
   const [open, setOpen] = useState<OpenState>({});
   const [selected, setSelected] = useState<EventKey | null>(null);
+  const [cardPage, setCardPage] = useState(0);
   const [cdDays, setCdDays] = useState<number>(daysUntilWedding());
   const [details, setDetails] = useState({
     meal: initialGuest.rsvp.meal,
@@ -74,6 +75,7 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
   const firstName = guest.name.split(" ")[0];
 
   function openEnvelope(key: EventKey) {
+    setCardPage(0);
     if ((open[key] || 0) >= 1) {
       setSelected(key);
       return;
@@ -117,6 +119,11 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
   const selEv = selected ? EVENT_MAP[selected] : null;
   const selAnswer = selected ? guest.rsvp.events[selected] : undefined;
   const attire = selected ? ATTIRE[selected] : undefined;
+  const cardPages = selEv ? (selEv.cards && selEv.cards.length ? selEv.cards : [selEv.card]) : [];
+
+  function goCardPage(i: number) {
+    setCardPage((p) => Math.max(0, Math.min(cardPages.length - 1, i)));
+  }
 
   return (
     <div>
@@ -458,12 +465,61 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
               ×
             </button>
             <div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selEv.card}
-                alt={selEv.name}
-                className="w-full rounded shadow-lg"
-              />
+              <div
+                className="relative rounded shadow-lg overflow-hidden"
+                style={{ perspective: 1400 }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={cardPage}
+                  src={cardPages[cardPage]}
+                  alt={`${selEv.name}${cardPages.length > 1 ? ` — page ${cardPage + 1}` : ""}`}
+                  className="nj-card-page w-full block rounded"
+                />
+                {cardPages.length > 1 && (
+                  <>
+                    {cardPage > 0 && (
+                      <button
+                        onClick={() => goCardPage(cardPage - 1)}
+                        aria-label="Previous page"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream/90 border border-border flex items-center justify-center text-maroon text-lg leading-none cursor-pointer shadow hover:bg-cream"
+                      >
+                        ‹
+                      </button>
+                    )}
+                    {cardPage < cardPages.length - 1 && (
+                      <button
+                        onClick={() => goCardPage(cardPage + 1)}
+                        aria-label="Next page"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream/90 border border-border flex items-center justify-center text-maroon text-lg leading-none cursor-pointer shadow hover:bg-cream"
+                      >
+                        ›
+                      </button>
+                    )}
+                    <div className="absolute left-0 right-0 bottom-3 flex items-center justify-center gap-2">
+                      {cardPages.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => goCardPage(i)}
+                          aria-label={`Go to page ${i + 1}`}
+                          className="rounded-full cursor-pointer border-0 p-0"
+                          style={{
+                            width: i === cardPage ? 18 : 7,
+                            height: 7,
+                            background: i === cardPage ? "#7A0C22" : "rgba(122,12,34,.35)",
+                            transition: "width .25s ease, background .25s ease",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {cardPages.length > 1 && (
+                <div className="mt-2.5 text-center text-[13px] tracking-[.14em] uppercase text-inkMuted">
+                  Page {cardPage + 1} of {cardPages.length}
+                </div>
+              )}
             </div>
             <div>
               <div className="text-sm tracking-[.3em] uppercase text-brown font-medium">

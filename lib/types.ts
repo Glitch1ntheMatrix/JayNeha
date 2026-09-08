@@ -19,6 +19,7 @@ export interface EventDef {
   venue: string;
   place: string;
   card: string;
+  cards?: string[];
   thumb: string;
   accent: string;
   accentDark: string;
