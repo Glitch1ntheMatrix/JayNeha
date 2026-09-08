@@ -351,18 +351,8 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
               >
                 <option value="">Select</option>
-                <option value="Not needed, arranging my own travel">
-                  Not needed, arranging my own travel
-                </option>
-                <option value="Yes, pickup needed from Mumbai airport">
-                  Yes, pickup needed from Mumbai airport
-                </option>
-                <option value="Yes, pickup needed from Lonavala railway station">
-                  Yes, pickup needed from Lonavala railway station
-                </option>
-                <option value="Not sure yet, will confirm closer to the date">
-                  Not sure yet, will confirm closer to the date
-                </option>
+                <option value="Yes, please arrange">Yes, please arrange</option>
+                <option value="No, driving myself">No, driving myself</option>
               </select>
             </div>
             <div>
