@@ -466,7 +466,7 @@ export default function GuestApp({
         </h2>
         {!scheduleRevealed ? (
           <div className="pt-5 border-t border-border text-[15.5px] text-inkMuted">
-            Will be shared once things are finalized.
+            We&apos;ll share the schedule post RSVP due date. Do check this space again.
           </div>
         ) : confirmedEvents.length ? (
           <div className="border-t border-border">
