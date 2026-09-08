@@ -79,6 +79,7 @@ export default function GuestApp({
     [guest.invitedEvents]
   );
 
+  const confirmedEvents = myEvents.filter((ev) => guest.rsvp.events[ev.key] === "yes");
   const answeredCount = guest.invitedEvents.filter((k) => guest.rsvp.events[k]).length;
   const firstName = guest.name.split(" ")[0];
 
@@ -282,6 +283,41 @@ export default function GuestApp({
             );
           })}
         </div>
+      </div>
+
+      <div className="max-w-[1160px] mx-auto px-[22px] pb-5">
+        <div className="text-sm tracking-[.34em] uppercase text-brown font-medium">
+          Your schedule
+        </div>
+        <h2 className="font-display text-[clamp(27px,3.6vw,38px)] text-maroon font-normal mt-2 mb-4">
+          Where to be, and when
+        </h2>
+        {confirmedEvents.length ? (
+          <div className="border-t border-border">
+            {confirmedEvents.map((ev) => (
+              <div
+                key={ev.key}
+                className="grid gap-2 py-5 border-b border-border"
+                style={{ gridTemplateColumns: "150px 1fr" }}
+              >
+                <div className="text-sm tracking-[.08em] uppercase text-maroon font-semibold">
+                  {ev.dateLabel}
+                </div>
+                <div>
+                  <div className="font-display text-[20px] text-maroon">{ev.name}</div>
+                  <div className="mt-1 text-[15.5px] text-inkSoft">{ev.time}</div>
+                  <div className="text-[15.5px] text-inkMuted">
+                    {ev.venue}, {ev.place}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="pt-5 border-t border-border text-[15.5px] text-inkMuted">
+            Say yes to an invitation above and it will appear here.
+          </div>
+        )}
       </div>
 
       <div className="max-w-[1160px] mx-auto px-[22px] mt-14">
