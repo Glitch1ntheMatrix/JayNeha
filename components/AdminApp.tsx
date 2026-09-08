@@ -255,8 +255,8 @@ export default function AdminApp() {
                 label="Reveal schedule to guests"
                 description={
                   scheduleRevealed
-                    ? "Guests can see “Your schedule / Where to be, and when” with events they've said yes to."
-                    : "The “Your schedule” section is hidden from every guest's page for now."
+                    ? "Guests see their confirmed events under “Your schedule.”"
+                    : "The “Your schedule” heading stays visible, but guests see “Will be shared once things are finalized” instead of their events."
                 }
               />
             </div>
