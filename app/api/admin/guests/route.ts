@@ -1,8 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase";
 import { djOn, invitedKeys } from "@/lib/guest";
 import { EventKey, GuestRow, RsvpAnswer } from "@/lib/types";
+
+const INVITED_COLUMN: Record<EventKey, string> = {
+  kirtan: "invited_kirtan",
+  bridalShower: "invited_bridal_shower",
+  mehendi: "invited_mehendi",
+  soiree: "invited_soiree",
+  djNight: "invited_dj_night",
+  haldi: "invited_haldi",
+  pheras: "invited_pheras",
+};
+
+function randomCode(): string {
+  // Avoids visually ambiguous characters (0/O, 1/I/L).
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return code;
+}
 
 const EVENT_KEYS: EventKey[] = [
   "kirtan",
@@ -100,4 +118,64 @@ export async function GET() {
   };
 
   return NextResponse.json({ rows, stats });
+}
+
+/**
+ * Body: { name: string, code?: string, city?, group?, phone?, email?, relation?,
+ *         invited?: Partial<Record<EventKey, boolean>> }
+ * `code` is auto-generated (and retried on collision) if omitted.
+ */
+export async function POST(req: NextRequest) {
+  const isAdmin = await verifyAdminSession();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body.name !== "string" || !body.name.trim()) {
+    return NextResponse.json({ error: "Name is required." }, { status: 400 });
+  }
+
+  const { data: maxRow } = await supabaseAdmin
+    .from("guests")
+    .select("id")
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextId = (maxRow?.id || 0) + 1;
+
+  const invited = (body.invited || {}) as Partial<Record<EventKey, boolean>>;
+  const invitedColumns = Object.fromEntries(
+    EVENT_KEYS.filter((k) => k !== "djNight").map((k) => [INVITED_COLUMN[k], Boolean(invited[k])])
+  );
+
+  const insert = {
+    id: nextId,
+    name: body.name.trim(),
+    code: typeof body.code === "string" && body.code.trim() ? body.code.trim().toUpperCase() : randomCode(),
+    city: body.city || null,
+    group_name: body.group || null,
+    phone: body.phone || null,
+    email: body.email || null,
+    relation: body.relation || null,
+    ...invitedColumns,
+    dj_night_override: invited.djNight ? true : null,
+  };
+
+  let lastError: string | null = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data, error } = await supabaseAdmin
+      .from("guests")
+      .insert(attempt === 0 ? insert : { ...insert, code: randomCode() })
+      .select("id")
+      .maybeSingle();
+    if (!error) {
+      return NextResponse.json({ ok: true, id: data?.id });
+    }
+    lastError = error.message;
+    // Only retry on a code collision when the caller didn't ask for a specific code.
+    if (typeof body.code === "string" && body.code.trim()) break;
+  }
+
+  return NextResponse.json({ error: lastError || "Could not add guest." }, { status: 500 });
 }

@@ -122,3 +122,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const isAdmin = await verifyAdminSession();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const guestId = Number(params.id);
+  if (!Number.isFinite(guestId)) {
+    return NextResponse.json({ error: "Invalid guest id." }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin.from("guests").delete().eq("id", guestId);
+  if (error) {
+    return NextResponse.json({ error: "Could not remove guest." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

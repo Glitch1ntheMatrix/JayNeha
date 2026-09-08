@@ -105,6 +105,19 @@ export default function AdminApp() {
   const [scheduleRevealed, setScheduleRevealed] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [showAddGuest, setShowAddGuest] = useState(false);
+  const [addDraft, setAddDraft] = useState({
+    name: "",
+    city: "",
+    group: "",
+    phone: "",
+    email: "",
+    relation: "",
+    invited: {} as Partial<Record<EventKey, boolean>>,
+  });
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [removingId, setRemovingId] = useState<number | null>(null);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -148,6 +161,56 @@ export default function AdminApp() {
   useEffect(() => {
     loadGuests();
   }, []);
+
+  async function addGuest() {
+    if (!addDraft.name.trim()) {
+      setAddError("Name is required.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Add ${addDraft.name.trim()} as a new guest?\n\nAn invite code will be generated for them.`
+    );
+    if (!confirmed) return;
+    setAddSaving(true);
+    setAddError("");
+    const res = await fetch("/api/admin/guests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: addDraft.name.trim(),
+        city: addDraft.city.trim(),
+        group: addDraft.group.trim(),
+        phone: addDraft.phone.trim(),
+        email: addDraft.email.trim(),
+        relation: addDraft.relation.trim(),
+        invited: addDraft.invited,
+      }),
+    });
+    setAddSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAddError(data.error || "Could not add guest.");
+      return;
+    }
+    setAddDraft({ name: "", city: "", group: "", phone: "", email: "", relation: "", invited: {} });
+    setShowAddGuest(false);
+    loadGuests();
+  }
+
+  async function removeGuest(row: AdminRow) {
+    const confirmed = window.confirm(
+      `Remove ${row.name}?\n\nThis permanently deletes them and all their RSVP answers, meal preference, and messages. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setRemovingId(row.id);
+    const res = await fetch(`/api/admin/guests/${row.id}`, { method: "DELETE" });
+    setRemovingId(null);
+    if (res.ok) {
+      setRows((rs) => rs.filter((r) => r.id !== row.id));
+    } else {
+      window.alert("Could not remove guest.");
+    }
+  }
 
   async function toggleDj(row: AdminRow) {
     const nextOn = !row.djOn;
@@ -325,7 +388,88 @@ export default function AdminApp() {
             >
               Export CSV
             </a>
+            <button
+              onClick={() => setShowAddGuest((s) => !s)}
+              className="px-[18px] py-[11px] bg-transparent border border-maroon rounded-[2px] text-maroon text-sm tracking-[.16em] uppercase cursor-pointer"
+            >
+              {showAddGuest ? "Cancel" : "+ Add guest"}
+            </button>
           </div>
+
+          {showAddGuest && (
+            <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
+              <div className="text-[15.5px] text-inkSoft font-medium mb-3">Add a new guest</div>
+              <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))" }}>
+                <input
+                  value={addDraft.name}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, name: e.target.value }))}
+                  placeholder="Name *"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+                <input
+                  value={addDraft.city}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, city: e.target.value }))}
+                  placeholder="City"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+                <input
+                  value={addDraft.group}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, group: e.target.value }))}
+                  placeholder="Group"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+                <input
+                  value={addDraft.relation}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, relation: e.target.value }))}
+                  placeholder="Relation"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+                <input
+                  value={addDraft.phone}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, phone: e.target.value }))}
+                  placeholder="Phone"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+                <input
+                  value={addDraft.email}
+                  onChange={(e) => setAddDraft((d) => ({ ...d, email: e.target.value }))}
+                  placeholder="Email"
+                  className="p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                />
+              </div>
+              <div className="mb-3">
+                <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1.5">Invite to</div>
+                <div className="flex flex-wrap gap-3">
+                  {EVENT_KEYS.map((key) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-1.5 text-[14.5px] text-inkSoft cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(addDraft.invited[key])}
+                        onChange={(e) =>
+                          setAddDraft((d) => ({
+                            ...d,
+                            invited: { ...d.invited, [key]: e.target.checked },
+                          }))
+                        }
+                      />
+                      {EVENT_MAP[key].name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {addError && <div className="mb-3 text-[14.5px] text-maroonHover">{addError}</div>}
+              <button
+                onClick={addGuest}
+                disabled={addSaving}
+                className="px-[18px] py-[11px] bg-maroon text-cream border-none rounded-[2px] text-sm tracking-[.16em] uppercase cursor-pointer disabled:opacity-60"
+              >
+                {addSaving ? "Adding…" : "Add guest"}
+              </button>
+            </div>
+          )}
 
           <div className="mb-4 px-4 py-3.5 bg-parchment border border-border rounded-sm text-[15.5px] text-inkMuted leading-relaxed">
             Every guest&apos;s invite code sits in the <strong className="text-maroon font-medium">Code</strong>{" "}
@@ -495,6 +639,15 @@ export default function AdminApp() {
                         <div className="leading-relaxed">{r.message}</div>
                       </div>
                     )}
+                    <div className="mt-3.5 pt-3.5 border-t border-border">
+                      <button
+                        onClick={() => removeGuest(r)}
+                        disabled={removingId === r.id}
+                        className="px-3 py-1.5 bg-transparent border border-maroonHover rounded-[2px] text-maroonHover text-[12.5px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
+                      >
+                        {removingId === r.id ? "Removing…" : "Remove guest"}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
