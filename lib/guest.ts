@@ -56,6 +56,16 @@ export async function fetchRoomsRevealed(): Promise<boolean> {
   return Boolean(data.rooms_revealed);
 }
 
+export async function fetchScheduleRevealed(): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("app_settings")
+    .select("schedule_revealed")
+    .eq("id", true)
+    .maybeSingle();
+  if (error || !data) return false;
+  return Boolean(data.schedule_revealed);
+}
+
 export async function buildGuestSession(guest: GuestRow): Promise<GuestSession> {
   const responses = await fetchRsvpResponses(guest.id);
   const events: Partial<Record<EventKey, RsvpAnswer>> = {};

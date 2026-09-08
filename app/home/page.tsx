@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { verifyGuestSession } from "@/lib/session";
-import { buildGuestSession, fetchGuestById } from "@/lib/guest";
+import { buildGuestSession, fetchGuestById, fetchScheduleRevealed } from "@/lib/guest";
 import { fetchSiteContent } from "@/lib/content";
 import GuestApp from "@/components/GuestApp";
 
@@ -11,10 +11,11 @@ export default async function HomePage() {
   const guestRow = await fetchGuestById(guestId);
   if (!guestRow) redirect("/");
 
-  const [guest, content] = await Promise.all([
+  const [guest, content, scheduleRevealed] = await Promise.all([
     buildGuestSession(guestRow),
     fetchSiteContent(),
+    fetchScheduleRevealed(),
   ]);
 
-  return <GuestApp initialGuest={guest} content={content} />;
+  return <GuestApp initialGuest={guest} content={content} scheduleRevealed={scheduleRevealed} />;
 }

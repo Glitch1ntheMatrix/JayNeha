@@ -46,6 +46,42 @@ interface AdminRow {
   submittedAt: string | null;
 }
 
+function SettingToggle({
+  on,
+  onToggle,
+  label,
+  description,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-4 px-4 py-3.5 bg-parchment border border-border rounded-sm">
+      <button
+        onClick={onToggle}
+        role="switch"
+        aria-checked={on}
+        className="relative shrink-0 w-11 h-6 rounded-full border cursor-pointer transition-colors"
+        style={{
+          background: on ? "#7A0C22" : "transparent",
+          borderColor: on ? "#7A0C22" : "#C9AE80",
+        }}
+      >
+        <span
+          className="absolute top-0.5 w-5 h-5 rounded-full bg-cream transition-all"
+          style={{ left: on ? "22px" : "2px" }}
+        />
+      </button>
+      <div>
+        <div className="text-[15.5px] text-inkSoft font-medium">{label}</div>
+        <div className="text-[14px] text-inkMuted">{description}</div>
+      </div>
+    </div>
+  );
+}
+
 interface EventStat {
   invited: number;
   confirmed: number;
@@ -66,7 +102,8 @@ export default function AdminApp() {
   const [editingRoom, setEditingRoom] = useState<number | null>(null);
   const [roomDraft, setRoomDraft] = useState({ number: "", roomType: "", checkIn: "" });
   const [roomsRevealed, setRoomsRevealed] = useState(false);
-  const [roomsRevealedLoaded, setRoomsRevealedLoaded] = useState(false);
+  const [scheduleRevealed, setScheduleRevealed] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   async function loadGuests() {
@@ -75,16 +112,17 @@ export default function AdminApp() {
     const data = await res.json();
     setRows(data.rows || []);
     setStats(data.stats || null);
-    loadRoomsRevealed();
+    loadSettings();
   }
 
-  async function loadRoomsRevealed() {
+  async function loadSettings() {
     const res = await fetch("/api/admin/settings");
     if (res.ok) {
       const data = await res.json();
       setRoomsRevealed(Boolean(data.roomsRevealed));
+      setScheduleRevealed(Boolean(data.scheduleRevealed));
     }
-    setRoomsRevealedLoaded(true);
+    setSettingsLoaded(true);
   }
 
   async function toggleRoomsRevealed() {
@@ -94,6 +132,16 @@ export default function AdminApp() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roomsRevealed: next }),
+    });
+  }
+
+  async function toggleScheduleRevealed() {
+    const next = !scheduleRevealed;
+    setScheduleRevealed(next);
+    await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduleRevealed: next }),
     });
   }
 
@@ -189,33 +237,28 @@ export default function AdminApp() {
     <AdminGate active="guests">
       {stats && (
         <div>
-          {roomsRevealedLoaded && (
-            <div className="mb-6 flex items-center gap-4 px-4 py-3.5 bg-parchment border border-border rounded-sm">
-              <button
-                onClick={toggleRoomsRevealed}
-                role="switch"
-                aria-checked={roomsRevealed}
-                className="relative shrink-0 w-11 h-6 rounded-full border cursor-pointer transition-colors"
-                style={{
-                  background: roomsRevealed ? "#7A0C22" : "transparent",
-                  borderColor: roomsRevealed ? "#7A0C22" : "#C9AE80",
-                }}
-              >
-                <span
-                  className="absolute top-0.5 w-5 h-5 rounded-full bg-cream transition-all"
-                  style={{ left: roomsRevealed ? "22px" : "2px" }}
-                />
-              </button>
-              <div>
-                <div className="text-[15.5px] text-inkSoft font-medium">
-                  Reveal room details to guests
-                </div>
-                <div className="text-[14px] text-inkMuted">
-                  {roomsRevealed
+          {settingsLoaded && (
+            <div className="mb-6">
+              <SettingToggle
+                on={roomsRevealed}
+                onToggle={toggleRoomsRevealed}
+                label="Reveal room details to guests"
+                description={
+                  roomsRevealed
                     ? "Guests with a room assigned now see their room number and type."
-                    : "Guests see a “we'll share room details soon” placeholder instead of their room number."}
-                </div>
-              </div>
+                    : "Guests see a “we'll share room details soon” placeholder instead of their room number."
+                }
+              />
+              <SettingToggle
+                on={scheduleRevealed}
+                onToggle={toggleScheduleRevealed}
+                label="Reveal schedule to guests"
+                description={
+                  scheduleRevealed
+                    ? "Guests can see “Your schedule / Where to be, and when” with events they've said yes to."
+                    : "The “Your schedule” section is hidden from every guest's page for now."
+                }
+              />
             </div>
           )}
 
