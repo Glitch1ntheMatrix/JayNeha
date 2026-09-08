@@ -30,6 +30,37 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
   });
   const [savingDetails, setSavingDetails] = useState(false);
   const [savedDetails, setSavedDetails] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_RE = /^\+[1-9]\d{6,14}$/;
+
+  function validateEmail(value: string) {
+    const v = value.trim();
+    if (!v) return "";
+    return EMAIL_RE.test(v) ? "" : "Enter a valid email address.";
+  }
+
+  function validatePhone(value: string) {
+    const v = value.trim();
+    if (!v) return "";
+    const compact = v.replace(/[\s-]/g, "");
+    return PHONE_RE.test(compact)
+      ? ""
+      : "Include the country code, e.g. +91 98765 43210.";
+  }
+
+  function blurEmail() {
+    const error = validateEmail(details.email);
+    setFieldErrors((e) => ({ ...e, email: error }));
+    if (!error) saveDetails();
+  }
+
+  function blurPhone() {
+    const error = validatePhone(details.phone);
+    setFieldErrors((e) => ({ ...e, phone: error }));
+    if (!error) saveDetails();
+  }
 
   useEffect(() => {
     const t = setInterval(() => setCdDays(daysUntilWedding()), 60_000);
@@ -324,10 +355,10 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
                 Arrival date
               </label>
               <input
+                type="date"
                 value={details.arrival}
                 onChange={(e) => setDetails((d) => ({ ...d, arrival: e.target.value }))}
                 onBlur={saveDetails}
-                placeholder="e.g. 10 December"
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
               />
             </div>
@@ -336,10 +367,10 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
                 Departure date
               </label>
               <input
+                type="date"
                 value={details.departure}
                 onChange={(e) => setDetails((d) => ({ ...d, departure: e.target.value }))}
                 onBlur={saveDetails}
-                placeholder="e.g. 13 December"
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
               />
             </div>
@@ -364,11 +395,18 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
               </label>
               <input
                 value={details.phone}
-                onChange={(e) => setDetails((d) => ({ ...d, phone: e.target.value }))}
-                onBlur={saveDetails}
+                onChange={(e) => {
+                  setDetails((d) => ({ ...d, phone: e.target.value }));
+                  setFieldErrors((er) => ({ ...er, phone: undefined }));
+                }}
+                onBlur={blurPhone}
                 placeholder="e.g. +91 98765 43210"
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
+                style={{ borderColor: fieldErrors.phone ? "#B23A3A" : undefined }}
               />
+              {fieldErrors.phone && (
+                <div className="mt-1.5 text-[13.5px] text-errorText">{fieldErrors.phone}</div>
+              )}
             </div>
             <div>
               <label className="block text-sm tracking-[.2em] uppercase text-inkSoft mb-2">
@@ -376,11 +414,18 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
               </label>
               <input
                 value={details.email}
-                onChange={(e) => setDetails((d) => ({ ...d, email: e.target.value }))}
-                onBlur={saveDetails}
+                onChange={(e) => {
+                  setDetails((d) => ({ ...d, email: e.target.value }));
+                  setFieldErrors((er) => ({ ...er, email: undefined }));
+                }}
+                onBlur={blurEmail}
                 placeholder="e.g. you@example.com"
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
+                style={{ borderColor: fieldErrors.email ? "#B23A3A" : undefined }}
               />
+              {fieldErrors.email && (
+                <div className="mt-1.5 text-[13.5px] text-errorText">{fieldErrors.email}</div>
+              )}
             </div>
           </div>
           <div className="mt-6">
