@@ -40,11 +40,19 @@ export async function GET() {
       city: g.city,
       code: g.code,
       group: g.group_name,
+      phone: g.phone,
+      email: g.email,
       invited,
       answered: answeredCountByGuest.get(g.id) || 0,
       totalInvited: invited.length,
       room: g.room_number ? { number: g.room_number, type: g.room_type || "" } : null,
       djOn: djOn(g),
+      meal: g.meal_preference,
+      arrival: g.arrival,
+      departure: g.departure,
+      transport: g.transport,
+      message: g.message,
+      submittedAt: g.rsvp_submitted_at,
     };
   });
 

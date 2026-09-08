@@ -94,6 +94,8 @@ export interface GuestSession {
     arrival: string;
     departure: string;
     transport: string;
+    phone: string;
+    email: string;
     message: string;
     submittedAt: string | null;
   };
@@ -105,9 +107,17 @@ export interface AdminGuestRow {
   city: string | null;
   code: string;
   group: string | null;
+  phone: string | null;
+  email: string | null;
   invited: EventKey[];
   answered: number;
   totalInvited: number;
   room: { number: string; type: string } | null;
   djOn: boolean;
+  meal: string | null;
+  arrival: string | null;
+  departure: string | null;
+  transport: string | null;
+  message: string | null;
+  submittedAt: string | null;
 }

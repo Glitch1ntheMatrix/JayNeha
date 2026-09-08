@@ -24,6 +24,8 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
     arrival: initialGuest.rsvp.arrival,
     departure: initialGuest.rsvp.departure,
     transport: initialGuest.rsvp.transport,
+    phone: initialGuest.rsvp.phone,
+    email: initialGuest.rsvp.email,
     message: initialGuest.rsvp.message,
   });
   const [savingDetails, setSavingDetails] = useState(false);
@@ -340,13 +342,50 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
             </div>
             <div>
               <label className="block text-sm tracking-[.2em] uppercase text-inkSoft mb-2">
-                Transport help needed?
+                Travel help needed?
               </label>
-              <input
+              <select
                 value={details.transport}
                 onChange={(e) => setDetails((d) => ({ ...d, transport: e.target.value }))}
                 onBlur={saveDetails}
-                placeholder="e.g. Pickup from airport"
+                className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
+              >
+                <option value="">Select</option>
+                <option value="Not needed, arranging my own travel">
+                  Not needed, arranging my own travel
+                </option>
+                <option value="Yes, pickup needed from Mumbai airport">
+                  Yes, pickup needed from Mumbai airport
+                </option>
+                <option value="Yes, pickup needed from Lonavala railway station">
+                  Yes, pickup needed from Lonavala railway station
+                </option>
+                <option value="Not sure yet, will confirm closer to the date">
+                  Not sure yet, will confirm closer to the date
+                </option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm tracking-[.2em] uppercase text-inkSoft mb-2">
+                Phone number
+              </label>
+              <input
+                value={details.phone}
+                onChange={(e) => setDetails((d) => ({ ...d, phone: e.target.value }))}
+                onBlur={saveDetails}
+                placeholder="e.g. +91 98765 43210"
+                className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
+              />
+            </div>
+            <div>
+              <label className="block text-sm tracking-[.2em] uppercase text-inkSoft mb-2">
+                Email
+              </label>
+              <input
+                value={details.email}
+                onChange={(e) => setDetails((d) => ({ ...d, email: e.target.value }))}
+                onBlur={saveDetails}
+                placeholder="e.g. you@example.com"
                 className="w-full p-3 border border-borderInput rounded-[2px] bg-white text-ink"
               />
             </div>

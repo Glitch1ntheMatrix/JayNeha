@@ -86,6 +86,8 @@ export async function buildGuestSession(guest: GuestRow): Promise<GuestSession> 
       arrival: guest.arrival || "",
       departure: guest.departure || "",
       transport: guest.transport || "",
+      phone: guest.phone || "",
+      email: guest.email || "",
       message: guest.message || "",
       submittedAt: guest.rsvp_submitted_at,
     },

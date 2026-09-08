@@ -14,7 +14,7 @@ const EVENT_KEYS: EventKey[] = [
   "pheras",
 ];
 
-const DETAIL_FIELDS = ["meal", "arrival", "departure", "transport", "message"] as const;
+const DETAIL_FIELDS = ["meal", "arrival", "departure", "transport", "phone", "email", "message"] as const;
 type DetailField = (typeof DETAIL_FIELDS)[number];
 
 const DETAIL_COLUMN: Record<DetailField, string> = {
@@ -22,13 +22,15 @@ const DETAIL_COLUMN: Record<DetailField, string> = {
   arrival: "arrival",
   departure: "departure",
   transport: "transport",
+  phone: "phone",
+  email: "email",
   message: "message",
 };
 
 /**
  * Body shapes:
  *  { type: "event", eventKey: "mehendi", answer: "yes" | "no" }
- *  { type: "details", meal?, arrival?, departure?, transport?, message? }
+ *  { type: "details", meal?, arrival?, departure?, transport?, phone?, email?, message? }
  *  { type: "submit" }   -- marks rsvp_submitted_at, guest can still edit after
  */
 export async function POST(req: NextRequest) {

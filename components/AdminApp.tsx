@@ -11,11 +11,19 @@ interface AdminRow {
   city: string | null;
   code: string;
   group: string | null;
+  phone: string | null;
+  email: string | null;
   invited: EventKey[];
   answered: number;
   totalInvited: number;
   room: { number: string; type: string } | null;
   djOn: boolean;
+  meal: string | null;
+  arrival: string | null;
+  departure: string | null;
+  transport: string | null;
+  message: string | null;
+  submittedAt: string | null;
 }
 
 interface Stats {
@@ -44,6 +52,7 @@ export default function AdminApp() {
   const [roomDraft, setRoomDraft] = useState({ number: "", roomType: "", checkIn: "" });
   const [roomsRevealed, setRoomsRevealed] = useState(false);
   const [roomsRevealedLoaded, setRoomsRevealedLoaded] = useState(false);
+  const [expanded, setExpanded] = useState<number | null>(null);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -296,21 +305,23 @@ export default function AdminApp() {
             <div className="overflow-x-auto border border-border rounded-sm bg-creamCard">
               <div
                 className="grid text-sm tracking-[.14em] uppercase text-inkMuted bg-parchment border-b border-border"
-                style={{ gridTemplateColumns: "200px 90px 170px 260px 110px 190px 90px", minWidth: 1120 }}
+                style={{ gridTemplateColumns: "200px 90px 150px 190px 230px 100px 170px 90px 80px", minWidth: 1300 }}
               >
                 <div className="px-3.5 py-2.5">Guest</div>
                 <div className="px-3.5 py-2.5">Code</div>
                 <div className="px-3.5 py-2.5">Group</div>
+                <div className="px-3.5 py-2.5">Contact</div>
                 <div className="px-3.5 py-2.5">Invited to</div>
                 <div className="px-3.5 py-2.5">RSVP</div>
                 <div className="px-3.5 py-2.5">Room</div>
                 <div className="px-3.5 py-2.5">DJ Night</div>
+                <div className="px-3.5 py-2.5">Details</div>
               </div>
               {shown.map((r) => (
+                <div key={r.id}>
                 <div
-                  key={r.id}
                   className="grid border-b border-[#F0E4D0] text-[15.5px] text-inkSoft items-center"
-                  style={{ gridTemplateColumns: "200px 90px 170px 260px 110px 190px 90px", minWidth: 1120 }}
+                  style={{ gridTemplateColumns: "200px 90px 150px 190px 230px 100px 170px 90px 80px", minWidth: 1300 }}
                 >
                   <div className="px-3.5 py-2.5">
                     {r.name}
@@ -318,6 +329,10 @@ export default function AdminApp() {
                   </div>
                   <div className="px-3.5 py-2.5 font-mono tracking-[.1em] text-maroon">{r.code}</div>
                   <div className="px-3.5 py-2.5 text-[15.5px] text-inkMuted">{r.group || "—"}</div>
+                  <div className="px-3.5 py-2.5 text-[14.5px] text-inkMuted leading-snug">
+                    <div>{r.phone || "—"}</div>
+                    <div className="truncate">{r.email || "—"}</div>
+                  </div>
                   <div className="px-3.5 py-2.5 text-[15px] text-inkMuted">
                     {r.invited.map((k) => EVENT_MAP[k].name).join(" · ") || "—"}
                   </div>
@@ -376,6 +391,50 @@ export default function AdminApp() {
                       {r.djOn ? "On list" : "Add"}
                     </button>
                   </div>
+                  <div className="px-3.5 py-2.5">
+                    <button
+                      onClick={() => setExpanded((id) => (id === r.id ? null : r.id))}
+                      className="text-left bg-transparent border-none cursor-pointer text-[13.5px] tracking-[.1em] uppercase text-maroon p-0 underline decoration-dotted"
+                    >
+                      {expanded === r.id ? "Hide" : "View"}
+                    </button>
+                  </div>
+                </div>
+                {expanded === r.id && (
+                  <div className="border-b border-[#F0E4D0] bg-parchment px-5 py-4 text-[15px] text-inkSoft">
+                    <div
+                      className="grid gap-4"
+                      style={{ gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))" }}
+                    >
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Meal</div>
+                        <div>{r.meal || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Arrival</div>
+                        <div>{r.arrival || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Departure</div>
+                        <div>{r.departure || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Travel help</div>
+                        <div>{r.transport || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Submitted</div>
+                        <div>{r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—"}</div>
+                      </div>
+                    </div>
+                    {r.message && (
+                      <div className="mt-3.5 pt-3.5 border-t border-border">
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-1">Message</div>
+                        <div className="leading-relaxed">{r.message}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 </div>
               ))}
             </div>
