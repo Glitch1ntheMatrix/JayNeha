@@ -88,6 +88,8 @@ export default function GuestApp({
   );
 
   const confirmedEvents = myEvents.filter((ev) => guest.rsvp.events[ev.key] === "yes");
+  const declinedCount = guest.invitedEvents.filter((k) => guest.rsvp.events[k] === "no").length;
+  const pendingCount = guest.invitedEvents.length - confirmedEvents.length - declinedCount;
   const answeredCount = guest.invitedEvents.filter((k) => guest.rsvp.events[k]).length;
   const firstName = guest.name.split(" ")[0];
 
@@ -176,9 +178,15 @@ export default function GuestApp({
             </div>
           </div>
           <div>
-            <div className="font-display text-[34px] text-maroon leading-none">{answeredCount}</div>
+            <div className="font-display text-[34px] text-maroon leading-none">
+              {answeredCount}
+              <span className="text-[18px] text-inkMuted">/{guest.invitedEvents.length}</span>
+            </div>
             <div className="text-sm tracking-[.2em] uppercase text-inkMuted mt-1.5">
               Invitations answered
+            </div>
+            <div className="mt-1 text-[13.5px] text-inkSoft">
+              {confirmedEvents.length} yes · {declinedCount} no · {pendingCount} pending
             </div>
           </div>
         </div>
@@ -192,9 +200,12 @@ export default function GuestApp({
           {myEvents.map((ev) => {
             const isOpen = (open[ev.key] || 0) >= 1;
             const ans = guest.rsvp.events[ev.key];
-            const statusLabel =
-              ans === "yes" ? "You said yes" : ans === "no" ? "You cannot make it" : "Awaiting your reply";
-            const statusColor = ans === "yes" ? "#4E7A3A" : ans === "no" ? "#372A20" : "#6B3D08";
+            const status =
+              ans === "yes"
+                ? { icon: "✓", label: "You said yes", fg: "#3F6B2E", bg: "#E3EEDD", border: "transparent" }
+                : ans === "no"
+                ? { icon: "×", label: "You cannot make it", fg: "#372A20", bg: "#EDE3DA", border: "transparent" }
+                : { icon: "•", label: "Awaiting your reply", fg: "#6B3D08", bg: "transparent", border: "#C9AE80" };
             return (
               <div key={ev.key} className="nj-fade">
                 <button
@@ -288,6 +299,28 @@ export default function GuestApp({
                   >
                     N&amp;J
                   </div>
+                  {(ans === "yes" || ans === "no") && (
+                    <div
+                      className="flex items-center justify-center"
+                      style={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: ans === "yes" ? "#4E7A3A" : "#372A20",
+                        color: "#FBF4EA",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        boxShadow: "0 2px 6px rgba(0,0,0,.3), 0 0 0 2px #FBF4EA",
+                        zIndex: 9,
+                      }}
+                      aria-hidden="true"
+                    >
+                      {ans === "yes" ? "✓" : "×"}
+                    </div>
+                  )}
                 </button>
                 <div className="mt-4 flex items-baseline gap-2.5">
                   <div className="font-body text-[19px] text-inkBody">{ev.timeShort || ev.time}</div>
@@ -296,8 +329,16 @@ export default function GuestApp({
                 <div className="mt-1 text-[15.5px] text-inkSoft">
                   {ev.venue}, {ev.place}
                 </div>
-                <div className="mt-2.5 text-sm tracking-[.16em] uppercase" style={{ color: statusColor }}>
-                  {statusLabel}
+                <div
+                  className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] tracking-[.1em] uppercase font-medium"
+                  style={{
+                    color: status.fg,
+                    background: status.bg,
+                    border: `1px solid ${status.border}`,
+                  }}
+                >
+                  <span aria-hidden="true">{status.icon}</span>
+                  {status.label}
                 </div>
               </div>
             );
