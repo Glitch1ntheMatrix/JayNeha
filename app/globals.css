@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fbf4ea;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #9e2233;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(158, 34, 51, 0.3);
+}
+a:hover {
+  color: #6b3d08;
+  border-bottom-color: rgba(185, 133, 38, 0.5);
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: "Jost", system-ui, sans-serif;
+  font-size: 17px;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgba(192, 138, 46, 0.45);
+  outline-offset: 1px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+@keyframes njFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes njSeal {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.16) rotate(-6deg);
+  }
+  62% {
+    opacity: 0.85;
+    transform: translate(-50%, -58%) scale(0.9) rotate(-15deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -80%) scale(0.58) rotate(-30deg);
+  }
+}
+@keyframes njPanel {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nj-fade {
+  animation: njFade 0.7s ease both;
+}
+.nj-panel {
+  animation: njPanel 0.5s ease both;
+}
+.nj-seal-pop {
+  animation: njSeal 0.34s cubic-bezier(0.4, 0, 0.4, 1) forwards;
+}
+
+.nj-envelope-flap {
+  transition: transform 0.82s cubic-bezier(0.4, 0.05, 0.25, 1) 0.05s;
+  transform-origin: top center;
+}
+.nj-envelope-card {
+  transition: transform 0.9s cubic-bezier(0.22, 0.62, 0.2, 1) 0.22s;
+}
