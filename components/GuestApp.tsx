@@ -399,31 +399,36 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
             </div>
             <div>
               <div className="text-sm tracking-[.3em] uppercase text-brown font-medium">
-                {selEv.dateFull}
+                {selEv.dateLabel}
               </div>
               <h3 className="font-display text-[30px] text-maroon my-2.5">{selEv.name}</h3>
-              <div className="text-[17px] text-inkBody">{selEv.time}</div>
-              <div className="mt-1.5 text-[15.5px] text-inkSoft">
-                {selEv.venue}, {selEv.place}
+
+              <div className="mt-5">
+                <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">When</div>
+                <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.dateFull}</div>
+                <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.time}</div>
+              </div>
+
+              <div className="mt-4">
+                <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">Where</div>
+                <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.venue}</div>
+                <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.place}</div>
               </div>
 
               {attire && (
                 <div className="mt-6 pt-5 border-t border-border">
-                  <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-2">
-                    Suggested attire — {attire.mood}
-                  </div>
-                  <div className="text-[15px] text-inkBody leading-relaxed">{attire.wear}</div>
+                  <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">Dress</div>
+                  <div className="text-[15.5px] text-inkBody leading-relaxed">{attire.mood}</div>
                   <div className="flex flex-wrap gap-2.5 mt-3.5">
                     {attire.colours.map((c) => (
-                      <div key={c.name} className="flex items-center gap-1.5">
-                        <span
-                          className="inline-block w-4 h-4 rounded-full border border-black/10"
-                          style={{
-                            background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${c.hex}`,
-                          }}
-                        />
-                        <span className="text-[13.5px] text-inkMuted">{c.name}</span>
-                      </div>
+                      <span
+                        key={c.name}
+                        title={c.name}
+                        className="inline-block w-5 h-5 rounded-full border border-black/10"
+                        style={{
+                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${c.hex}`,
+                        }}
+                      />
                     ))}
                   </div>
                   <div className="mt-2.5 text-[15px] text-errorText font-semibold">{attire.avoid}</div>
