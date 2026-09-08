@@ -392,8 +392,6 @@ export default function GuestApp({
                 <option value="">Select</option>
                 <option value="Vegetarian">Vegetarian</option>
                 <option value="Jain">Jain</option>
-                <option value="Non-Vegetarian">Non-Vegetarian</option>
-                <option value="Vegan">Vegan</option>
               </select>
             </div>
             <div>
