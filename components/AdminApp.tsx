@@ -3,7 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { EVENT_MAP } from "@/lib/events";
-import { EventKey } from "@/lib/types";
+import { EventKey, RsvpAnswer } from "@/lib/types";
+
+const EVENT_KEYS: EventKey[] = [
+  "kirtan",
+  "bridalShower",
+  "mehendi",
+  "soiree",
+  "djNight",
+  "haldi",
+  "pheras",
+];
+const EVENT_SHORT: Record<EventKey, string> = {
+  kirtan: "KIR",
+  bridalShower: "BS",
+  mehendi: "MEH",
+  soiree: "SOI",
+  djNight: "DJ",
+  haldi: "HAL",
+  pheras: "PHE",
+};
 
 interface AdminRow {
   id: number;
@@ -14,6 +33,7 @@ interface AdminRow {
   phone: string | null;
   email: string | null;
   invited: EventKey[];
+  events: Partial<Record<EventKey, RsvpAnswer>>;
   answered: number;
   totalInvited: number;
   room: { number: string; type: string } | null;
@@ -40,14 +60,14 @@ const CONTENT_LABELS: Record<ContentKey, string> = {
   family_helpline: "Family helpline (title = name, body = phone)",
 };
 
+interface EventStat {
+  invited: number;
+  confirmed: number;
+}
+
 interface Stats {
   guests: number;
-  kirtan: number;
-  mehendi: number;
-  soiree: number;
-  haldi: number;
-  pheras: number;
-  djNight: number;
+  events: Record<EventKey, EventStat>;
   roomsHeld: number;
 }
 
@@ -336,21 +356,28 @@ export default function AdminApp() {
               className="grid gap-3.5 mb-6"
               style={{ gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))" }}
             >
-              {[
-                { label: "Guests", value: stats.guests },
-                { label: "Kirtan", value: stats.kirtan },
-                { label: "Mehendi", value: stats.mehendi },
-                { label: "Soiree", value: stats.soiree },
-                { label: "Haldi", value: stats.haldi },
-                { label: "Pheras", value: stats.pheras },
-                { label: "DJ Night", value: stats.djNight },
-                { label: "Rooms held", value: stats.roomsHeld },
-              ].map((s) => (
-                <div key={s.label} className="bg-creamCard border border-border rounded-sm px-4 py-4">
-                  <div className="font-display text-2xl text-maroon leading-none">{s.value}</div>
-                  <div className="text-sm tracking-[.14em] uppercase text-inkMuted mt-1.5">{s.label}</div>
-                </div>
-              ))}
+              <div className="bg-creamCard border border-border rounded-sm px-4 py-4">
+                <div className="font-display text-2xl text-maroon leading-none">{stats.guests}</div>
+                <div className="text-sm tracking-[.14em] uppercase text-inkMuted mt-1.5">Guests</div>
+              </div>
+              {EVENT_KEYS.map((key) => {
+                const s = stats.events[key];
+                return (
+                  <div key={key} className="bg-creamCard border border-border rounded-sm px-4 py-4">
+                    <div className="font-display text-2xl text-maroon leading-none">
+                      {s.confirmed}
+                      <span className="text-base text-inkMuted"> / {s.invited}</span>
+                    </div>
+                    <div className="text-sm tracking-[.14em] uppercase text-inkMuted mt-1.5">
+                      {EVENT_MAP[key].name}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="bg-creamCard border border-border rounded-sm px-4 py-4">
+                <div className="font-display text-2xl text-maroon leading-none">{stats.roomsHeld}</div>
+                <div className="text-sm tracking-[.14em] uppercase text-inkMuted mt-1.5">Rooms held</div>
+              </div>
             </div>
 
             <div className="flex gap-3 flex-wrap items-center mb-4">
@@ -396,14 +423,17 @@ export default function AdminApp() {
             <div className="overflow-x-auto border border-border rounded-sm bg-creamCard">
               <div
                 className="grid text-sm tracking-[.14em] uppercase text-inkMuted bg-parchment border-b border-border"
-                style={{ gridTemplateColumns: "200px 90px 150px 190px 230px 100px 170px 90px 80px", minWidth: 1300 }}
+                style={{ gridTemplateColumns: "200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1290 }}
               >
                 <div className="px-3.5 py-2.5">Guest</div>
                 <div className="px-3.5 py-2.5">Code</div>
                 <div className="px-3.5 py-2.5">Group</div>
                 <div className="px-3.5 py-2.5">Contact</div>
-                <div className="px-3.5 py-2.5">Invited to</div>
-                <div className="px-3.5 py-2.5">RSVP</div>
+                {EVENT_KEYS.map((key) => (
+                  <div key={key} className="py-2.5 text-center" title={EVENT_MAP[key].name}>
+                    {EVENT_SHORT[key]}
+                  </div>
+                ))}
                 <div className="px-3.5 py-2.5">Room</div>
                 <div className="px-3.5 py-2.5">DJ Night</div>
                 <div className="px-3.5 py-2.5">Details</div>
@@ -412,7 +442,7 @@ export default function AdminApp() {
                 <div key={r.id}>
                 <div
                   className="grid border-b border-[#F0E4D0] text-[15.5px] text-inkSoft items-center"
-                  style={{ gridTemplateColumns: "200px 90px 150px 190px 230px 100px 170px 90px 80px", minWidth: 1300 }}
+                  style={{ gridTemplateColumns: "200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1290 }}
                 >
                   <div className="px-3.5 py-2.5">
                     {r.name}
@@ -424,12 +454,31 @@ export default function AdminApp() {
                     <div>{r.phone || "—"}</div>
                     <div className="truncate">{r.email || "—"}</div>
                   </div>
-                  <div className="px-3.5 py-2.5 text-[15px] text-inkMuted">
-                    {r.invited.map((k) => EVENT_MAP[k].name).join(" · ") || "—"}
-                  </div>
-                  <div className="px-3.5 py-2.5 text-[15px]" style={{ color: r.answered ? "#4E7A3A" : "#6B3D08" }}>
-                    {r.answered ? `${r.answered} answered` : "waiting"}
-                  </div>
+                  {EVENT_KEYS.map((key) => {
+                    if (!r.invited.includes(key)) {
+                      return (
+                        <div key={key} className="text-center" style={{ color: "rgba(55,42,32,.35)" }}>
+                          –
+                        </div>
+                      );
+                    }
+                    const answer = r.events[key];
+                    const label =
+                      answer === "yes" ? "Yes" : answer === "no" ? "No" : "Pending";
+                    return (
+                      <div key={key} className="flex justify-center" title={`${EVENT_MAP[key].name}: ${label}`}>
+                        <span
+                          className="inline-block rounded-full"
+                          style={{
+                            width: 10,
+                            height: 10,
+                            background: answer === "yes" ? "#4E7A3A" : answer === "no" ? "#8A3B2A" : "transparent",
+                            border: answer ? "none" : "1.5px solid #C9AE80",
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                   <div className="px-3.5 py-2.5">
                     {editingRoom === r.id ? (
                       <div className="flex flex-col gap-1">

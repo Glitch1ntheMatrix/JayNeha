@@ -111,6 +111,7 @@ export interface AdminGuestRow {
   phone: string | null;
   email: string | null;
   invited: EventKey[];
+  events: Partial<Record<EventKey, RsvpAnswer>>;
   answered: number;
   totalInvited: number;
   room: { number: string; type: string } | null;
