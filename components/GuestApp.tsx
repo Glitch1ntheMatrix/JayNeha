@@ -26,7 +26,13 @@ export default function GuestApp({
   const [guest, setGuest] = useState<GuestSession>(initialGuest);
   const [open, setOpen] = useState<OpenState>({});
   const [selected, setSelected] = useState<EventKey | null>(null);
+  const [modalClosing, setModalClosing] = useState(false);
   const [cardPage, setCardPage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lens, setLens] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const ZOOM = 2.5;
+  const LENS_SIZE = 150;
+  const [hoverCapable, setHoverCapable] = useState(false);
   const [cdDays, setCdDays] = useState<number>(daysUntilWedding());
   const [details, setDetails] = useState({
     meal: initialGuest.rsvp.meal,
@@ -96,9 +102,21 @@ export default function GuestApp({
   }
 
   function closeModal() {
-    setOpen((s) => (selected ? { ...s, [selected]: 0 } : s));
-    setSelected(null);
+    setModalClosing(true);
+    setTimeout(() => {
+      setOpen((s) => (selected ? { ...s, [selected]: 0 } : s));
+      setSelected(null);
+      setModalClosing(false);
+      setLightboxOpen(false);
+      setLens(null);
+    }, 200);
   }
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      setHoverCapable(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+    }
+  }, []);
 
   async function answer(key: EventKey, value: RsvpAnswer) {
     // optimistic update
@@ -500,11 +518,15 @@ export default function GuestApp({
 
       {selEv && (
         <div
-          className="fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-y-auto bg-black/40 p-3.5 md:p-[clamp(16px,4vw,48px)]"
+          className={`fixed inset-0 z-50 flex items-start md:items-center justify-center overflow-y-auto bg-black/40 p-3.5 md:p-[clamp(16px,4vw,48px)] ${
+            modalClosing ? "nj-backdrop-out" : "nj-backdrop-in"
+          }`}
           onClick={closeModal}
         >
           <div
-            className="nj-panel relative bg-cream rounded max-w-[880px] w-full grid gap-5 md:gap-[clamp(20px,3vw,40px)] p-4 md:p-[clamp(20px,3vw,36px)] grid-cols-1 md:grid-cols-2 my-6"
+            className={`relative bg-cream rounded max-w-[880px] w-full grid gap-5 md:gap-[clamp(20px,3vw,40px)] p-4 md:p-[clamp(20px,3vw,36px)] grid-cols-1 md:grid-cols-2 my-6 ${
+              modalClosing ? "nj-panel-out" : "nj-panel"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -516,8 +538,19 @@ export default function GuestApp({
             </button>
             <div>
               <div
-                className="relative rounded shadow-lg overflow-hidden"
+                className={`relative rounded shadow-lg overflow-hidden ${hoverCapable ? "cursor-zoom-in" : ""}`}
                 style={{ perspective: 1400 }}
+                onMouseMove={(e) => {
+                  if (!hoverCapable) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setLens({
+                    x: Math.min(Math.max(e.clientX - rect.left, 0), rect.width),
+                    y: Math.min(Math.max(e.clientY - rect.top, 0), rect.height),
+                    w: rect.width,
+                    h: rect.height,
+                  });
+                }}
+                onMouseLeave={() => setLens(null)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -525,7 +558,32 @@ export default function GuestApp({
                   src={cardPages[cardPage]}
                   alt={`${selEv.name}${cardPages.length > 1 ? ` — page ${cardPage + 1}` : ""}`}
                   className="nj-card-page w-full block rounded"
+                  onClick={() => setLightboxOpen(true)}
                 />
+                <div
+                  className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/45 text-cream text-[11px] tracking-[.06em] uppercase pointer-events-none"
+                  aria-hidden="true"
+                >
+                  🔍 {hoverCapable ? "Hover or tap to zoom" : "Tap to zoom"}
+                </div>
+                {hoverCapable && lens && (
+                  <div
+                    className="absolute rounded-full pointer-events-none border-2 border-white shadow-lg"
+                    style={{
+                      width: LENS_SIZE,
+                      height: LENS_SIZE,
+                      left: lens.x - LENS_SIZE / 2,
+                      top: lens.y - LENS_SIZE / 2,
+                      backgroundImage: `url(${cardPages[cardPage]})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: `${lens.w * ZOOM}px ${lens.h * ZOOM}px`,
+                      backgroundPosition: `${-(lens.x * ZOOM - LENS_SIZE / 2)}px ${-(
+                        lens.y * ZOOM -
+                        LENS_SIZE / 2
+                      )}px`,
+                    }}
+                  />
+                )}
                 {cardPages.length > 1 && (
                   <>
                     {cardPage > 0 && (
@@ -572,25 +630,27 @@ export default function GuestApp({
               )}
             </div>
             <div>
-              <div className="text-sm tracking-[.3em] uppercase text-brown font-medium">
-                {selEv.dateLabel}
+              <div className="nj-fade" style={{ animationDelay: "0ms" }}>
+                <div className="text-sm tracking-[.3em] uppercase text-brown font-medium">
+                  {selEv.dateLabel}
+                </div>
+                <h3 className="font-display text-[30px] text-maroon my-2.5">{selEv.name}</h3>
               </div>
-              <h3 className="font-display text-[30px] text-maroon my-2.5">{selEv.name}</h3>
 
-              <div className="mt-5">
+              <div className="nj-fade mt-5" style={{ animationDelay: "80ms" }}>
                 <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">When</div>
                 <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.dateFull}</div>
                 <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.time}</div>
               </div>
 
-              <div className="mt-4">
+              <div className="nj-fade mt-4" style={{ animationDelay: "150ms" }}>
                 <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">Where</div>
                 <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.venue}</div>
                 <div className="text-[15.5px] text-inkBody leading-relaxed">{selEv.place}</div>
               </div>
 
               {attire && (
-                <div className="mt-6 pt-5 border-t border-border">
+                <div className="nj-fade mt-6 pt-5 border-t border-border" style={{ animationDelay: "220ms" }}>
                   <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">Dress</div>
                   <div className="text-[15.5px] text-inkBody leading-relaxed">{attire.mood}</div>
                   {attire.colours.length > 0 && (
@@ -621,7 +681,7 @@ export default function GuestApp({
                 </div>
               )}
 
-              <div className="mt-7 pt-6 border-t border-border">
+              <div className="nj-fade mt-7 pt-6 border-t border-border" style={{ animationDelay: "290ms" }}>
                 <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-3">
                   Will you be joining us?
                 </div>
@@ -652,6 +712,29 @@ export default function GuestApp({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {selEv && lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4 overflow-auto"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close zoomed image"
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-cream/90 border border-border flex items-center justify-center text-inkSoft text-lg leading-none cursor-pointer z-10"
+          >
+            ×
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={cardPages[cardPage]}
+            alt={selEv.name}
+            className="max-w-none w-auto"
+            style={{ maxHeight: "none" }}
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
