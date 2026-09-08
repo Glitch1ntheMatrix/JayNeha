@@ -5,8 +5,6 @@ import { EVENT_MAP, ATTIRE, WEDDING_DATE_ISO } from "@/lib/events";
 import { EventKey, GuestSession, RsvpAnswer } from "@/lib/types";
 import Header from "./Header";
 
-const DEADLINE = process.env.NEXT_PUBLIC_RSVP_DEADLINE || "30 September 2026";
-
 type OpenState = Partial<Record<EventKey, 0 | 1>>;
 
 function daysUntilWedding(): number {
@@ -125,10 +123,7 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
       <Header active="home" guestName={guest.name} />
 
       <div className="max-w-[1160px] mx-auto px-[22px] pt-9 md:pt-[clamp(38px,6vw,76px)] pb-10">
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <div className="text-sm tracking-[.34em] uppercase text-brown font-medium">Namaste</div>
-          <div className="text-sm text-inkMuted">RSVP by {DEADLINE}</div>
-        </div>
+        <div className="text-sm tracking-[.34em] uppercase text-brown font-medium">Namaste</div>
         <h1 className="font-display text-[clamp(35px,5.6vw,54px)] leading-[1.05] my-3.5 text-maroon font-normal">
           {firstName}
         </h1>
