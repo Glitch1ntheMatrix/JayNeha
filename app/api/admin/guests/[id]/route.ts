@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase";
+import { fetchGuestById, invitedKeys } from "@/lib/guest";
+import { EventKey } from "@/lib/types";
+
+const EVENT_KEYS: EventKey[] = [
+  "kirtan",
+  "bridalShower",
+  "mehendi",
+  "soiree",
+  "djNight",
+  "haldi",
+  "pheras",
+];
 
 /**
  * Body shapes:
@@ -11,6 +23,10 @@ import { supabaseAdmin } from "@/lib/supabase";
  *     -- null clears the override and falls back to the original invite list.
  *   { type: "message", actioned: boolean }
  *     -- marks a guest's message as actioned/resolved (or reopens it).
+ *   { type: "event", eventKey: EventKey, answer: "yes" | "no" | null }
+ *     -- lets a host record/clear a guest's RSVP for one event, for guests
+ *        who replied outside the site (phone, WhatsApp, in person).
+ *        null clears the answer back to pending.
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const isAdmin = await verifyAdminSession();
@@ -60,6 +76,45 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       .eq("id", guestId);
     if (error) {
       return NextResponse.json({ error: "Could not update message status." }, { status: 500 });
+    }
+  } else if (body.type === "event") {
+    const eventKey = body.eventKey as EventKey;
+    const answer = body.answer;
+    if (!EVENT_KEYS.includes(eventKey) || (answer !== "yes" && answer !== "no" && answer !== null)) {
+      return NextResponse.json({ error: "Invalid event or answer." }, { status: 400 });
+    }
+    const guest = await fetchGuestById(guestId);
+    if (!guest) {
+      return NextResponse.json({ error: "Guest not found." }, { status: 404 });
+    }
+    if (!invitedKeys(guest).includes(eventKey)) {
+      return NextResponse.json(
+        { error: "This guest is not invited to that event." },
+        { status: 400 }
+      );
+    }
+    if (answer === null) {
+      const { error } = await supabaseAdmin
+        .from("rsvp_responses")
+        .delete()
+        .eq("guest_id", guestId)
+        .eq("event_key", eventKey);
+      if (error) {
+        return NextResponse.json({ error: "Could not clear the answer." }, { status: 500 });
+      }
+    } else {
+      const { error } = await supabaseAdmin.from("rsvp_responses").upsert(
+        {
+          guest_id: guestId,
+          event_key: eventKey,
+          answer,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "guest_id,event_key" }
+      );
+      if (error) {
+        return NextResponse.json({ error: "Could not save the answer." }, { status: 500 });
+      }
     }
   } else {
     return NextResponse.json({ error: "Unknown update type." }, { status: 400 });

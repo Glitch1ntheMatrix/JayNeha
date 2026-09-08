@@ -111,6 +111,27 @@ export default function AdminApp() {
     });
   }
 
+  async function cycleEventAnswer(row: AdminRow, key: EventKey) {
+    const current = row.events[key] ?? null;
+    const next: RsvpAnswer | null = current === null ? "yes" : current === "yes" ? "no" : null;
+    setRows((rs) =>
+      rs.map((r) =>
+        r.id === row.id
+          ? {
+              ...r,
+              events: next === null ? { ...r.events, [key]: undefined } : { ...r.events, [key]: next },
+              answered: Object.values({ ...r.events, [key]: next }).filter(Boolean).length,
+            }
+          : r
+      )
+    );
+    await fetch(`/api/admin/guests/${row.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "event", eventKey: key, answer: next }),
+    });
+  }
+
   function startEditRoom(row: AdminRow) {
     setEditingRoom(row.id);
     setRoomDraft({ number: row.room?.number || "", roomType: row.room?.type || "", checkIn: "" });
@@ -263,7 +284,9 @@ export default function AdminApp() {
             column below. <strong className="text-maroon font-medium">Copy name + code</strong> puts the whole
             list on your clipboard. <strong className="text-maroon font-medium">Export CSV</strong> downloads
             every guest with their code, events, and answers so far. Set a room number below to make it appear
-            on that guest&apos;s page immediately.
+            on that guest&apos;s page immediately. For guests who replied outside the site (phone,
+            WhatsApp, in person), click their dot in an event column to cycle it through{" "}
+            <strong className="text-maroon font-medium">pending → yes → no</strong> on their behalf.
           </div>
 
           <div className="overflow-x-auto border border-border rounded-sm bg-creamCard">
@@ -312,7 +335,12 @@ export default function AdminApp() {
                     const label =
                       answer === "yes" ? "Yes" : answer === "no" ? "No" : "Pending";
                     return (
-                      <div key={key} className="flex justify-center" title={`${EVENT_MAP[key].name}: ${label}`}>
+                      <button
+                        key={key}
+                        onClick={() => cycleEventAnswer(r, key)}
+                        className="flex justify-center items-center bg-transparent border-none cursor-pointer p-2"
+                        title={`${EVENT_MAP[key].name}: ${label} — click to change (records the RSVP on their behalf)`}
+                      >
                         <span
                           className="inline-block rounded-full"
                           style={{
@@ -322,7 +350,7 @@ export default function AdminApp() {
                             border: answer ? "none" : "1.5px solid #C9AE80",
                           }}
                         />
-                      </div>
+                      </button>
                     );
                   })}
                   <div className="px-3.5 py-2.5">
