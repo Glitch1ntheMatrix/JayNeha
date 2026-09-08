@@ -67,6 +67,7 @@ export interface GuestRow {
   departure: string | null;
   transport: string | null;
   message: string | null;
+  message_actioned: boolean;
   rsvp_submitted_at: string | null;
   created_at: string;
 }
@@ -121,5 +122,6 @@ export interface AdminGuestRow {
   departure: string | null;
   transport: string | null;
   message: string | null;
+  messageActioned: boolean;
   submittedAt: string | null;
 }

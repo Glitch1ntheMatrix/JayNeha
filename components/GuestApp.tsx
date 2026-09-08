@@ -587,25 +587,31 @@ export default function GuestApp({
                 <div className="mt-6 pt-5 border-t border-border">
                   <div className="text-sm tracking-[.2em] uppercase text-inkSoft mb-1.5">Dress</div>
                   <div className="text-[15.5px] text-inkBody leading-relaxed">{attire.mood}</div>
-                  <div className="flex flex-wrap gap-2.5 mt-3.5">
-                    {attire.colours.map((c) => (
-                      <span
-                        key={c.name}
-                        title={c.name}
-                        className="inline-block w-5 h-5 rounded-full border border-black/10"
-                        style={{
-                          background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${c.hex}`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-2.5 text-[15px] text-errorText font-semibold">{attire.avoid}</div>
-                  <a
-                    href="/style-guide"
-                    className="inline-block mt-2.5 text-[14.5px] tracking-[.14em] uppercase text-maroon cursor-pointer"
-                  >
-                    For more, refer to the style guide
-                  </a>
+                  {attire.colours.length > 0 && (
+                    <div className="flex flex-wrap gap-2.5 mt-3.5">
+                      {attire.colours.map((c) => (
+                        <span
+                          key={c.name}
+                          title={c.name}
+                          className="inline-block w-5 h-5 rounded-full border border-black/10"
+                          style={{
+                            background: `radial-gradient(circle at 34% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 58%), ${c.hex}`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {attire.avoid && (
+                    <div className="mt-2.5 text-[15px] text-errorText font-semibold">{attire.avoid}</div>
+                  )}
+                  {attire.colours.length > 0 && (
+                    <a
+                      href="/style-guide"
+                      className="inline-block mt-2.5 text-[14.5px] tracking-[.14em] uppercase text-maroon cursor-pointer"
+                    >
+                      For more, refer to the style guide
+                    </a>
+                  )}
                 </div>
               )}
 

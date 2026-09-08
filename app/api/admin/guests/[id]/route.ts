@@ -9,6 +9,8 @@ import { supabaseAdmin } from "@/lib/supabase";
  *        automatically on that guest's home page.
  *   { type: "dj", on: boolean | null }
  *     -- null clears the override and falls back to the original invite list.
+ *   { type: "message", actioned: boolean }
+ *     -- marks a guest's message as actioned/resolved (or reopens it).
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const isAdmin = await verifyAdminSession();
@@ -47,6 +49,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       .eq("id", guestId);
     if (error) {
       return NextResponse.json({ error: "Could not update DJ Night list." }, { status: 500 });
+    }
+  } else if (body.type === "message") {
+    if (typeof body.actioned !== "boolean") {
+      return NextResponse.json({ error: "Invalid value." }, { status: 400 });
+    }
+    const { error } = await supabaseAdmin
+      .from("guests")
+      .update({ message_actioned: body.actioned })
+      .eq("id", guestId);
+    if (error) {
+      return NextResponse.json({ error: "Could not update message status." }, { status: 500 });
     }
   } else {
     return NextResponse.json({ error: "Unknown update type." }, { status: 400 });

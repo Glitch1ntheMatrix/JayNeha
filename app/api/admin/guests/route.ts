@@ -71,6 +71,7 @@ export async function GET() {
       departure: g.departure,
       transport: g.transport,
       message: g.message,
+      messageActioned: Boolean(g.message_actioned),
       submittedAt: g.rsvp_submitted_at,
     };
   });

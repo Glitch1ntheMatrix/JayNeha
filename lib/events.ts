@@ -111,6 +111,12 @@ export const EVENT_MAP: Record<EventKey, EventDef> = EVENTS.reduce(
 export const WEDDING_DATE_ISO = "2026-12-12T15:00:00+05:30";
 
 export const ATTIRE: Partial<Record<EventKey, AttireGuide>> = {
+  bridalShower: {
+    mood: "Summer florals",
+    avoid: "",
+    wear: "",
+    colours: [],
+  },
   mehendi: {
     mood: "Vibrant and artistic",
     avoid: "Please do not wear red.",
