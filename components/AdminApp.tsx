@@ -42,6 +42,8 @@ export default function AdminApp() {
   const [copied, setCopied] = useState(false);
   const [editingRoom, setEditingRoom] = useState<number | null>(null);
   const [roomDraft, setRoomDraft] = useState({ number: "", roomType: "", checkIn: "" });
+  const [roomsRevealed, setRoomsRevealed] = useState(false);
+  const [roomsRevealedLoaded, setRoomsRevealedLoaded] = useState(false);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -53,6 +55,26 @@ export default function AdminApp() {
     setRows(data.rows || []);
     setStats(data.stats || null);
     setLock("open");
+    loadRoomsRevealed();
+  }
+
+  async function loadRoomsRevealed() {
+    const res = await fetch("/api/admin/settings");
+    if (res.ok) {
+      const data = await res.json();
+      setRoomsRevealed(Boolean(data.roomsRevealed));
+    }
+    setRoomsRevealedLoaded(true);
+  }
+
+  async function toggleRoomsRevealed() {
+    const next = !roomsRevealed;
+    setRoomsRevealed(next);
+    await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomsRevealed: next }),
+    });
   }
 
   useEffect(() => {
@@ -181,6 +203,35 @@ export default function AdminApp() {
 
         {lock === "open" && stats && (
           <div>
+            {roomsRevealedLoaded && (
+              <div className="mb-6 flex items-center gap-4 px-4 py-3.5 bg-parchment border border-border rounded-sm">
+                <button
+                  onClick={toggleRoomsRevealed}
+                  role="switch"
+                  aria-checked={roomsRevealed}
+                  className="relative shrink-0 w-11 h-6 rounded-full border cursor-pointer transition-colors"
+                  style={{
+                    background: roomsRevealed ? "#7A0C22" : "transparent",
+                    borderColor: roomsRevealed ? "#7A0C22" : "#C9AE80",
+                  }}
+                >
+                  <span
+                    className="absolute top-0.5 w-5 h-5 rounded-full bg-cream transition-all"
+                    style={{ left: roomsRevealed ? "22px" : "2px" }}
+                  />
+                </button>
+                <div>
+                  <div className="text-[15.5px] text-inkSoft font-medium">
+                    Reveal room details to guests
+                  </div>
+                  <div className="text-[14px] text-inkMuted">
+                    {roomsRevealed
+                      ? "Guests with a room assigned now see their room number and type."
+                      : "Guests see a \u201cwe'll share room details soon\u201d placeholder instead of their room number."}
+                  </div>
+                </div>
+              </div>
+            )}
             <div
               className="grid gap-3.5 mb-6"
               style={{ gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))" }}

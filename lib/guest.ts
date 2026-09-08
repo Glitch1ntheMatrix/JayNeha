@@ -46,12 +46,23 @@ export async function fetchRsvpResponses(guestId: number): Promise<RsvpResponseR
   return data as RsvpResponseRow[];
 }
 
+export async function fetchRoomsRevealed(): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("app_settings")
+    .select("rooms_revealed")
+    .eq("id", true)
+    .maybeSingle();
+  if (error || !data) return false;
+  return Boolean(data.rooms_revealed);
+}
+
 export async function buildGuestSession(guest: GuestRow): Promise<GuestSession> {
   const responses = await fetchRsvpResponses(guest.id);
   const events: Partial<Record<EventKey, RsvpAnswer>> = {};
   responses.forEach((r) => {
     events[r.event_key] = r.answer;
   });
+  const roomsRevealed = await fetchRoomsRevealed();
 
   return {
     id: guest.id,
@@ -68,6 +79,7 @@ export async function buildGuestSession(guest: GuestRow): Promise<GuestSession> 
           checkIn: guest.room_check_in || "",
         }
       : null,
+    roomsRevealed,
     rsvp: {
       events,
       meal: guest.meal_preference || "",

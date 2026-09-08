@@ -238,19 +238,19 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
         </div>
       </div>
 
-      {guest.room && (
-        <div className="max-w-[1160px] mx-auto px-[22px] mt-14">
+      <div className="max-w-[1160px] mx-auto px-[22px] mt-14">
+        <div
+          className="rounded p-6 md:p-[clamp(26px,4vw,42px)] relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg,#7A0C22,#5C0A1B)", color: "#F6E9D3" }}
+        >
           <div
-            className="rounded p-6 md:p-[clamp(26px,4vw,42px)] relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg,#7A0C22,#5C0A1B)", color: "#F6E9D3" }}
-          >
-            <div
-              className="absolute rounded-full"
-              style={{ right: -40, top: -40, width: 200, height: 200, border: "1px solid rgba(240,210,150,.18)" }}
-            />
-            <div className="text-sm tracking-[.3em] uppercase" style={{ color: "#E1B45E" }}>
-              Your stay at Ikshana Resort, Lonavala
-            </div>
+            className="absolute rounded-full"
+            style={{ right: -40, top: -40, width: 200, height: 200, border: "1px solid rgba(240,210,150,.18)" }}
+          />
+          <div className="text-sm tracking-[.3em] uppercase" style={{ color: "#E1B45E" }}>
+            Your stay at Ikshana Resort, Lonavala
+          </div>
+          {guest.roomsRevealed && guest.room ? (
             <div
               className="grid gap-6 mt-6 relative items-start"
               style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}
@@ -270,9 +270,26 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="grid gap-6 mt-6 relative items-start"
+              style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}
+            >
+              <div>
+                <div className="font-display text-[36px] leading-none">11 December</div>
+                <div className="text-sm tracking-[.2em] uppercase mt-1.5" style={{ color: "rgba(252,245,232,.95)" }}>
+                  Check in
+                </div>
+              </div>
+              <div>
+                <div className="font-body text-[23px] leading-snug" style={{ maxWidth: "34ch" }}>
+                  We&apos;ll share room details in the first week of December. Do check this space again.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="max-w-[1160px] mx-auto px-[22px] mt-16">
         <h2 className="font-display text-[clamp(27px,3.6vw,38px)] text-maroon font-normal mb-6 mt-3">
@@ -362,9 +379,16 @@ export default function GuestApp({ initialGuest }: { initialGuest: GuestSession 
           onClick={closeModal}
         >
           <div
-            className="nj-panel bg-cream rounded max-w-[880px] w-full grid gap-5 md:gap-[clamp(20px,3vw,40px)] p-4 md:p-[clamp(20px,3vw,36px)] grid-cols-1 md:grid-cols-2 my-6"
+            className="nj-panel relative bg-cream rounded max-w-[880px] w-full grid gap-5 md:gap-[clamp(20px,3vw,40px)] p-4 md:p-[clamp(20px,3vw,36px)] grid-cols-1 md:grid-cols-2 my-6"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              onClick={closeModal}
+              aria-label="Close"
+              className="absolute top-3 right-3 md:top-4 md:right-4 w-8 h-8 rounded-full bg-creamCard border border-border flex items-center justify-center text-inkSoft text-lg leading-none cursor-pointer hover:border-maroon hover:text-maroon z-10"
+            >
+              ×
+            </button>
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

@@ -87,6 +87,7 @@ export interface GuestSession {
   invitedEvents: EventKey[];
   djNightOn: boolean;
   room: { number: string; type: string; checkIn: string } | null;
+  roomsRevealed: boolean;
   rsvp: {
     events: Partial<Record<EventKey, RsvpAnswer>>;
     meal: string;
