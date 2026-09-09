@@ -14,6 +14,17 @@ const EVENT_KEYS: EventKey[] = [
   "pheras",
 ];
 
+// djNight is intentionally excluded here - its invite list is controlled by
+// dj_night_override (see the "dj" type below), not a plain invited_* column.
+const INVITED_COLUMN: Partial<Record<EventKey, string>> = {
+  kirtan: "invited_kirtan",
+  bridalShower: "invited_bridal_shower",
+  mehendi: "invited_mehendi",
+  soiree: "invited_soiree",
+  haldi: "invited_haldi",
+  pheras: "invited_pheras",
+};
+
 /**
  * Body shapes:
  *   { type: "room", number?: string, roomType?: string, checkIn?: string }
@@ -27,6 +38,13 @@ const EVENT_KEYS: EventKey[] = [
  *     -- lets a host record/clear a guest's RSVP for one event, for guests
  *        who replied outside the site (phone, WhatsApp, in person).
  *        null clears the answer back to pending.
+ *   { type: "invite", eventKey: EventKey, on: boolean }
+ *     -- adds or removes a guest from an event's invite list. For djNight
+ *        this sets dj_night_override (same field the "dj" type uses); for
+ *        every other event it flips the matching invited_* column. Removing
+ *        a guest from an event also clears any RSVP answer they had for it,
+ *        so a guest never shows an answer for an event they're not invited
+ *        to.
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const isAdmin = await verifyAdminSession();
@@ -114,6 +132,45 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       );
       if (error) {
         return NextResponse.json({ error: "Could not save the answer." }, { status: 500 });
+      }
+    }
+  } else if (body.type === "invite") {
+    const eventKey = body.eventKey as EventKey;
+    const on = body.on;
+    if (!EVENT_KEYS.includes(eventKey) || typeof on !== "boolean") {
+      return NextResponse.json({ error: "Invalid event or value." }, { status: 400 });
+    }
+
+    if (eventKey === "djNight") {
+      const { error } = await supabaseAdmin
+        .from("guests")
+        .update({ dj_night_override: on })
+        .eq("id", guestId);
+      if (error) {
+        return NextResponse.json({ error: "Could not update DJ Night list." }, { status: 500 });
+      }
+    } else {
+      const column = INVITED_COLUMN[eventKey]!;
+      const { error } = await supabaseAdmin
+        .from("guests")
+        .update({ [column]: on })
+        .eq("id", guestId);
+      if (error) {
+        return NextResponse.json({ error: "Could not update the invite list." }, { status: 500 });
+      }
+    }
+
+    if (!on) {
+      const { error: rsvpError } = await supabaseAdmin
+        .from("rsvp_responses")
+        .delete()
+        .eq("guest_id", guestId)
+        .eq("event_key", eventKey);
+      if (rsvpError) {
+        return NextResponse.json(
+          { error: "Removed from the invite list, but could not clear their RSVP answer." },
+          { status: 500 }
+        );
       }
     }
   } else {

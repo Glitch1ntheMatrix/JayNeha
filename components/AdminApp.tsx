@@ -118,6 +118,9 @@ export default function AdminApp() {
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState("");
   const [removingId, setRemovingId] = useState<number | null>(null);
+  const [manageEvent, setManageEvent] = useState<EventKey | "">("");
+  const [addToEventSearch, setAddToEventSearch] = useState("");
+  const [invitingId, setInvitingId] = useState<number | null>(null);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -210,6 +213,44 @@ export default function AdminApp() {
     } else {
       window.alert("Could not remove guest.");
     }
+  }
+
+  async function setEventInvite(row: AdminRow, eventKey: EventKey, on: boolean) {
+    const confirmed = window.confirm(
+      on
+        ? `Add ${row.name} to the ${EVENT_MAP[eventKey].name} guest list?`
+        : `Remove ${row.name} from ${EVENT_MAP[eventKey].name}?\n\nThis also clears any RSVP answer they gave for it.`
+    );
+    if (!confirmed) return;
+    setInvitingId(row.id);
+    const res = await fetch(`/api/admin/guests/${row.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "invite", eventKey, on }),
+    });
+    setInvitingId(null);
+    if (!res.ok) {
+      window.alert("Could not update the invite list.");
+      return;
+    }
+    setRows((rs) =>
+      rs.map((r) => {
+        if (r.id !== row.id) return r;
+        const invited = on
+          ? [...r.invited, eventKey]
+          : r.invited.filter((k) => k !== eventKey);
+        const events = { ...r.events };
+        if (!on) delete events[eventKey];
+        return {
+          ...r,
+          invited,
+          events,
+          totalInvited: invited.length,
+          answered: Object.keys(events).length,
+          djOn: eventKey === "djNight" ? on : r.djOn,
+        };
+      })
+    );
   }
 
   async function toggleDj(row: AdminRow) {
@@ -356,6 +397,108 @@ export default function AdminApp() {
               <div className="font-display text-2xl text-maroon leading-none">{stats.roomsHeld}</div>
               <div className="text-sm tracking-[.14em] uppercase text-inkMuted mt-1.5">Rooms held</div>
             </div>
+          </div>
+
+          <div className="mb-6 bg-creamCard border border-border rounded-sm p-5">
+            <div className="text-[15.5px] text-inkSoft font-medium mb-1">
+              Manage event guest lists
+            </div>
+            <div className="text-[14px] text-inkMuted mb-3">
+              See who&apos;s invited to an event, and add or remove guests from it.
+            </div>
+            <select
+              value={manageEvent}
+              onChange={(e) => {
+                setManageEvent(e.target.value as EventKey | "");
+                setAddToEventSearch("");
+              }}
+              className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
+            >
+              <option value="">Choose an event…</option>
+              {EVENT_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {EVENT_MAP[key].name}
+                </option>
+              ))}
+            </select>
+
+            {manageEvent &&
+              (() => {
+                const invitedList = rows
+                  .filter((r) => r.invited.includes(manageEvent))
+                  .sort((a, b) => a.name.localeCompare(b.name));
+                const q = addToEventSearch.trim().toLowerCase();
+                const candidates = q
+                  ? rows
+                      .filter((r) => !r.invited.includes(manageEvent) && r.name.toLowerCase().includes(q))
+                      .slice(0, 30)
+                  : [];
+                return (
+                  <div className="grid gap-5 mt-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
+                    <div>
+                      <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
+                        Invited ({invitedList.length})
+                      </div>
+                      <div className="max-h-[320px] overflow-y-auto flex flex-col gap-1.5 pr-1">
+                        {invitedList.length === 0 && (
+                          <div className="text-[14.5px] text-inkMuted">No one invited yet.</div>
+                        )}
+                        {invitedList.map((r) => (
+                          <div
+                            key={r.id}
+                            className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-parchment rounded-sm text-[14.5px] text-inkSoft"
+                          >
+                            <span>{r.name}</span>
+                            <button
+                              onClick={() => setEventInvite(r, manageEvent, false)}
+                              disabled={invitingId === r.id}
+                              className="shrink-0 px-2 py-1 bg-transparent border border-maroonHover rounded-[2px] text-maroonHover text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
+                        Add a guest
+                      </div>
+                      <input
+                        value={addToEventSearch}
+                        onChange={(e) => setAddToEventSearch(e.target.value)}
+                        placeholder="Search by name"
+                        className="w-full p-2.5 mb-2 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                      />
+                      <div className="max-h-[280px] overflow-y-auto flex flex-col gap-1.5 pr-1">
+                        {!q && (
+                          <div className="text-[14.5px] text-inkMuted">
+                            Type a name to find a guest to add.
+                          </div>
+                        )}
+                        {q && candidates.length === 0 && (
+                          <div className="text-[14.5px] text-inkMuted">No matching guests.</div>
+                        )}
+                        {candidates.map((r) => (
+                          <div
+                            key={r.id}
+                            className="flex items-center justify-between gap-2 px-2.5 py-1.5 border border-border rounded-sm text-[14.5px] text-inkSoft"
+                          >
+                            <span>{r.name}</span>
+                            <button
+                              onClick={() => setEventInvite(r, manageEvent, true)}
+                              disabled={invitingId === r.id}
+                              className="shrink-0 px-2 py-1 bg-maroon text-cream border-none rounded-[2px] text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
           </div>
 
           <div className="flex gap-3 flex-wrap items-center mb-4">
