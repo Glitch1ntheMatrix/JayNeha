@@ -265,7 +265,7 @@ export default function GuestApp({
                     <div className="absolute left-0 right-0 top-0 h-px" style={{ background: "rgba(255,255,255,.35)" }} />
                   </div>
                   <div
-                    className={isOpen ? "" : "nj-seal-pop-hidden"}
+                    className={isOpen ? "" : "nj-seal-pulse"}
                     style={{
                       position: "absolute",
                       top: "47%",
@@ -288,6 +288,14 @@ export default function GuestApp({
                   >
                     N&amp;J
                   </div>
+                  {!isOpen && (
+                    <div
+                      className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/40 text-cream text-[11px] tracking-[.06em] uppercase"
+                      style={{ zIndex: 7 }}
+                    >
+                      Tap to open
+                    </div>
+                  )}
                   {(ans === "yes" || ans === "no") && (
                     <div
                       className="flex items-center justify-center"

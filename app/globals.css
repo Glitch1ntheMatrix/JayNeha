@@ -128,6 +128,19 @@ img {
   animation: njSeal 0.34s cubic-bezier(0.4, 0, 0.4, 1) forwards;
 }
 
+@keyframes njSealPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08) rotate(-3deg);
+  }
+}
+.nj-seal-pulse {
+  animation: njSealPulse 2.4s ease-in-out infinite;
+}
+
 @keyframes njCardPage {
   from {
     opacity: 0;
