@@ -3,7 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { EVENT_MAP } from "@/lib/events";
 import { EventKey, RsvpAnswer } from "@/lib/types";
+import { RSVP_DEADLINE } from "@/lib/deadline";
+import { SITE_URL } from "@/lib/site";
 import AdminGate from "./AdminGate";
+
+function reminderMessage(name: string, code: string): string {
+  const firstName = name.split(" ")[0];
+  let msg = `Hi ${firstName}! Just a friendly reminder to RSVP for Neha & Jay's wedding - please respond by ${RSVP_DEADLINE}. Your invite code is ${code}.`;
+  if (SITE_URL) msg += ` RSVP here: ${SITE_URL}`;
+  return msg;
+}
+
+function whatsappLink(phone: string, name: string, code: string): string {
+  const digits = phone.replace(/[^\d]/g, "");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(reminderMessage(name, code))}`;
+}
 
 const EVENT_KEYS: EventKey[] = [
   "kirtan",
@@ -121,6 +135,8 @@ export default function AdminApp() {
   const [manageEvent, setManageEvent] = useState<EventKey | "">("");
   const [addToEventSearch, setAddToEventSearch] = useState("");
   const [invitingId, setInvitingId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showReminders, setShowReminders] = useState(false);
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -341,6 +357,27 @@ export default function AdminApp() {
       })
       .catch(() => {});
   }
+
+  function toggleSelected(id: number) {
+    setSelectedIds((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectPending() {
+    setSelectedIds(new Set(rows.filter((r) => r.answered < r.totalInvited).map((r) => r.id)));
+    setShowReminders(true);
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setShowReminders(false);
+  }
+
+  const selectedGuests = rows.filter((r) => selectedIds.has(r.id));
 
   return (
     <AdminGate active="guests">
@@ -614,6 +651,72 @@ export default function AdminApp() {
             </div>
           )}
 
+          <div className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3.5 bg-parchment border border-border rounded-sm">
+            <div className="text-[15.5px] text-inkSoft font-medium">
+              {selectedIds.size > 0 ? `${selectedIds.size} guest${selectedIds.size === 1 ? "" : "s"} selected` : "Select guests below to send reminders"}
+            </div>
+            <button
+              onClick={selectPending}
+              className="px-3.5 py-2 bg-transparent border border-maroon rounded-[2px] text-maroon text-[13px] tracking-[.1em] uppercase cursor-pointer"
+            >
+              Select all pending
+            </button>
+            {selectedIds.size > 0 && (
+              <>
+                <button
+                  onClick={() => setShowReminders((s) => !s)}
+                  className="px-3.5 py-2 bg-maroon text-cream border-none rounded-[2px] text-[13px] tracking-[.1em] uppercase cursor-pointer"
+                >
+                  {showReminders ? "Hide reminders" : `Send reminders (${selectedIds.size})`}
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="px-3.5 py-2 bg-transparent border border-borderInput rounded-[2px] text-inkSoft text-[13px] tracking-[.1em] uppercase cursor-pointer"
+                >
+                  Clear selection
+                </button>
+              </>
+            )}
+          </div>
+
+          {showReminders && selectedGuests.length > 0 && (
+            <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
+              <div className="text-[15.5px] text-inkSoft font-medium mb-1">Send WhatsApp reminders</div>
+              <div className="text-[14px] text-inkMuted mb-4">
+                Each button opens WhatsApp with a reminder pre-filled for that guest, using their invite
+                code - you still tap send yourself in WhatsApp. Guests with no phone number on file are
+                skipped.
+              </div>
+              <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
+                {selectedGuests.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between gap-3 px-3 py-2 bg-parchment rounded-sm text-[14.5px] text-inkSoft"
+                  >
+                    <span>
+                      {r.name}
+                      {!r.phone && <span className="text-inkMuted"> — no phone on file</span>}
+                    </span>
+                    {r.phone ? (
+                      <a
+                        href={whatsappLink(r.phone, r.name, r.code)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 px-3 py-1.5 bg-[#2E7D5B] text-cream border-none rounded-[2px] text-[12.5px] tracking-[.1em] uppercase no-underline"
+                      >
+                        WhatsApp
+                      </a>
+                    ) : (
+                      <span className="shrink-0 px-3 py-1.5 text-[12.5px] tracking-[.1em] uppercase text-inkMuted">
+                        Skipped
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mb-4 px-4 py-3.5 bg-parchment border border-border rounded-sm text-[15.5px] text-inkMuted leading-relaxed">
             Every guest&apos;s invite code sits in the <strong className="text-maroon font-medium">Code</strong>{" "}
             column below. <strong className="text-maroon font-medium">Copy name + code</strong> puts the whole
@@ -627,8 +730,9 @@ export default function AdminApp() {
           <div className="overflow-x-auto border border-border rounded-sm bg-creamCard">
             <div
               className="grid text-sm tracking-[.14em] uppercase text-inkMuted bg-parchment border-b border-border"
-              style={{ gridTemplateColumns: "200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1290 }}
+              style={{ gridTemplateColumns: "32px 200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1322 }}
             >
+              <div className="px-1.5 py-2.5" />
               <div className="px-3.5 py-2.5">Guest</div>
               <div className="px-3.5 py-2.5">Code</div>
               <div className="px-3.5 py-2.5">Group</div>
@@ -646,8 +750,16 @@ export default function AdminApp() {
               <div key={r.id}>
                 <div
                   className="grid border-b border-[#F0E4D0] text-[15.5px] text-inkSoft items-center"
-                  style={{ gridTemplateColumns: "200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1290 }}
+                  style={{ gridTemplateColumns: "32px 200px 90px 140px 170px repeat(7,44px) 150px 80px 70px", minWidth: 1322 }}
                 >
+                  <div className="px-1.5 py-2.5 flex justify-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleSelected(r.id)}
+                      aria-label={`Select ${r.name}`}
+                    />
+                  </div>
                   <div className="px-3.5 py-2.5">
                     {r.name}
                     <div className="text-[14.5px] text-inkMuted">{r.city || "—"}</div>
@@ -655,7 +767,20 @@ export default function AdminApp() {
                   <div className="px-3.5 py-2.5 font-mono tracking-[.1em] text-maroon">{r.code}</div>
                   <div className="px-3.5 py-2.5 text-[15.5px] text-inkMuted">{r.group || "—"}</div>
                   <div className="px-3.5 py-2.5 text-[14.5px] text-inkMuted leading-snug">
-                    <div>{r.phone || "—"}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span>{r.phone || "—"}</span>
+                      {r.phone && (
+                        <a
+                          href={whatsappLink(r.phone, r.name, r.code)}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={`Send ${r.name} a WhatsApp reminder`}
+                          className="shrink-0 text-[12px] tracking-[.06em] uppercase text-[#2E7D5B] border-none no-underline"
+                        >
+                          Remind
+                        </a>
+                      )}
+                    </div>
                     <div className="truncate">{r.email || "—"}</div>
                   </div>
                   {EVENT_KEYS.map((key) => {
