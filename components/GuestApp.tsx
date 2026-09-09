@@ -112,6 +112,7 @@ export default function GuestApp({
   async function answer(key: EventKey, value: RsvpAnswer) {
     // optimistic update
     setGuest((g) => ({ ...g, rsvp: { ...g.rsvp, events: { ...g.rsvp.events, [key]: value } } }));
+    setTimeout(() => closeModal(), 650);
     const res = await fetch("/api/rsvp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
