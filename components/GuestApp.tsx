@@ -732,18 +732,12 @@ export default function GuestApp({
           <button
             onClick={() => setLightboxOpen(false)}
             aria-label="Close zoomed image"
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-cream/90 border border-border flex items-center justify-center text-inkSoft text-lg leading-none cursor-pointer z-10"
+            className="fixed top-4 right-4 w-12 h-12 rounded-full bg-cream/90 border border-border flex items-center justify-center text-inkSoft text-2xl leading-none cursor-pointer z-10"
           >
             ×
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cardPages[cardPage]}
-            alt={selEv.name}
-            className="max-w-none w-auto"
-            style={{ maxHeight: "none" }}
-            onClick={(e) => e.stopPropagation()}
-          />
+          <img src={cardPages[cardPage]} alt={selEv.name} className="max-w-none w-auto" style={{ maxHeight: "none" }} />
         </div>
       )}
     </div>
