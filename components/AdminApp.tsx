@@ -7,18 +7,6 @@ import { RSVP_DEADLINE } from "@/lib/deadline";
 import { SITE_URL } from "@/lib/site";
 import AdminGate from "./AdminGate";
 
-function reminderMessage(name: string, code: string): string {
-  const firstName = name.split(" ")[0];
-  let msg = `Hi ${firstName}! Just a friendly reminder to RSVP for Neha & Jay's wedding - please respond by ${RSVP_DEADLINE}. Your invite code is ${code}.`;
-  if (SITE_URL) msg += ` RSVP here: ${SITE_URL}`;
-  return msg;
-}
-
-function whatsappLink(phone: string, name: string, code: string): string {
-  const digits = phone.replace(/[^\d]/g, "");
-  return `https://wa.me/${digits}?text=${encodeURIComponent(reminderMessage(name, code))}`;
-}
-
 const EVENT_KEYS: EventKey[] = [
   "kirtan",
   "bridalShower",
@@ -28,6 +16,43 @@ const EVENT_KEYS: EventKey[] = [
   "haldi",
   "pheras",
 ];
+
+type MessageType = "rsvp" | "invite" | "event" | "custom";
+const MESSAGE_TYPES: { key: MessageType; label: string }[] = [
+  { key: "rsvp", label: "RSVP reminder" },
+  { key: "invite", label: "Invite" },
+  { key: "event", label: "Event details" },
+  { key: "custom", label: "Custom message" },
+];
+
+// {name} and {code} are placeholders, filled in per-guest when a link is built.
+function buildTemplate(type: MessageType, eventKey: EventKey | ""): string {
+  if (type === "invite") {
+    let msg = "Hi {name}! You're warmly invited to Neha & Jay's wedding celebrations 💛 Your invite code is {code} - RSVP";
+    msg += SITE_URL ? ` at ${SITE_URL}` : "";
+    msg += ` by ${RSVP_DEADLINE}.`;
+    return msg;
+  }
+  if (type === "event") {
+    if (!eventKey) return "";
+    const ev = EVENT_MAP[eventKey];
+    return `Hi {name}! Reminder for ${ev.name} - ${ev.dateFull}, ${ev.time}, at ${ev.venue}, ${ev.place}. See you there!`;
+  }
+  if (type === "custom") return "";
+  let msg = "Hi {name}! Just a friendly reminder to RSVP for Neha & Jay's wedding - please respond by " + RSVP_DEADLINE + ". Your invite code is {code}.";
+  if (SITE_URL) msg += ` RSVP here: ${SITE_URL}`;
+  return msg;
+}
+
+function fillTemplate(template: string, name: string, code: string): string {
+  return template.replace(/\{name\}/g, name.split(" ")[0]).replace(/\{code\}/g, code);
+}
+
+function whatsappLink(phone: string, template: string, name: string, code: string): string {
+  const digits = phone.replace(/[^\d]/g, "");
+  return `https://wa.me/${digits}?text=${encodeURIComponent(fillTemplate(template, name, code))}`;
+}
+
 const EVENT_SHORT: Record<EventKey, string> = {
   kirtan: "KIR",
   bridalShower: "BS",
@@ -137,6 +162,19 @@ export default function AdminApp() {
   const [invitingId, setInvitingId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showReminders, setShowReminders] = useState(false);
+  const [messageType, setMessageType] = useState<MessageType>("rsvp");
+  const [messageEvent, setMessageEvent] = useState<EventKey | "">("");
+  const [messageDraft, setMessageDraft] = useState(buildTemplate("rsvp", ""));
+
+  function changeMessageType(type: MessageType) {
+    setMessageType(type);
+    setMessageDraft(buildTemplate(type, type === "event" ? messageEvent : ""));
+  }
+
+  function changeMessageEvent(eventKey: EventKey | "") {
+    setMessageEvent(eventKey);
+    setMessageDraft(buildTemplate("event", eventKey));
+  }
 
   async function loadGuests() {
     const res = await fetch("/api/admin/guests");
@@ -651,6 +689,50 @@ export default function AdminApp() {
             </div>
           )}
 
+          <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
+            <div className="text-[15.5px] text-inkSoft font-medium mb-1">Reminder message</div>
+            <div className="text-[14px] text-inkMuted mb-3">
+              Choose a starting point, then edit freely. This is what every WhatsApp{" "}
+              <strong className="text-maroon font-medium">Remind</strong> link below sends -
+              per guest, per event, or in bulk. Use <code>{"{name}"}</code> and <code>{"{code}"}</code>{" "}
+              to insert a guest&apos;s first name and invite code.
+            </div>
+            <div className="flex flex-wrap gap-3 mb-3">
+              <select
+                value={messageType}
+                onChange={(e) => changeMessageType(e.target.value as MessageType)}
+                className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
+              >
+                {MESSAGE_TYPES.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              {messageType === "event" && (
+                <select
+                  value={messageEvent}
+                  onChange={(e) => changeMessageEvent(e.target.value as EventKey | "")}
+                  className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
+                >
+                  <option value="">Choose an event…</option>
+                  {EVENT_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {EVENT_MAP[key].name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <textarea
+              value={messageDraft}
+              onChange={(e) => setMessageDraft(e.target.value)}
+              rows={3}
+              placeholder={messageType === "custom" ? "Write your message… use {name} and {code} as placeholders." : ""}
+              className="w-full p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+            />
+          </div>
+
           <div className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3.5 bg-parchment border border-border rounded-sm">
             <div className="text-[15.5px] text-inkSoft font-medium">
               {selectedIds.size > 0 ? `${selectedIds.size} guest${selectedIds.size === 1 ? "" : "s"} selected` : "Select guests below to send reminders"}
@@ -681,11 +763,10 @@ export default function AdminApp() {
 
           {showReminders && selectedGuests.length > 0 && (
             <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
-              <div className="text-[15.5px] text-inkSoft font-medium mb-1">Send WhatsApp reminders</div>
+              <div className="text-[15.5px] text-inkSoft font-medium mb-1">Send WhatsApp messages</div>
               <div className="text-[14px] text-inkMuted mb-4">
-                Each button opens WhatsApp with a reminder pre-filled for that guest, using their invite
-                code - you still tap send yourself in WhatsApp. Guests with no phone number on file are
-                skipped.
+                Each button opens WhatsApp with the message above pre-filled for that guest - you still
+                tap send yourself in WhatsApp. Guests with no phone number on file are skipped.
               </div>
               <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
                 {selectedGuests.map((r) => (
@@ -699,7 +780,7 @@ export default function AdminApp() {
                     </span>
                     {r.phone ? (
                       <a
-                        href={whatsappLink(r.phone, r.name, r.code)}
+                        href={whatsappLink(r.phone, messageDraft, r.name, r.code)}
                         target="_blank"
                         rel="noreferrer"
                         className="shrink-0 px-3 py-1.5 bg-[#2E7D5B] text-cream border-none rounded-[2px] text-[12.5px] tracking-[.1em] uppercase no-underline"
@@ -771,10 +852,10 @@ export default function AdminApp() {
                       <span>{r.phone || "—"}</span>
                       {r.phone && (
                         <a
-                          href={whatsappLink(r.phone, r.name, r.code)}
+                          href={whatsappLink(r.phone, messageDraft, r.name, r.code)}
                           target="_blank"
                           rel="noreferrer"
-                          title={`Send ${r.name} a WhatsApp reminder`}
+                          title={`Send ${r.name} a WhatsApp message`}
                           className="shrink-0 text-[12px] tracking-[.06em] uppercase text-[#2E7D5B] border-none no-underline"
                         >
                           Remind
