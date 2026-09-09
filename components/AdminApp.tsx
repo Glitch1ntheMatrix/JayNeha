@@ -121,6 +121,37 @@ function SettingToggle({
   );
 }
 
+function Collapsible({
+  title,
+  subtitle,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
+  return (
+    <div className="mb-4 bg-creamCard border border-border rounded-sm">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 p-4 bg-transparent border-none cursor-pointer text-left"
+      >
+        <div>
+          <div className="text-[15.5px] text-inkSoft font-medium">{title}</div>
+          {subtitle && <div className="text-[13px] text-inkMuted mt-0.5">{subtitle}</div>}
+        </div>
+        <span className="text-sm tracking-[.14em] uppercase text-maroon shrink-0">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
 interface EventStat {
   invited: number;
   confirmed: number;
@@ -144,7 +175,6 @@ export default function AdminApp() {
   const [scheduleRevealed, setScheduleRevealed] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [showAddGuest, setShowAddGuest] = useState(false);
   const [addDraft, setAddDraft] = useState({
     name: "",
     city: "",
@@ -250,7 +280,6 @@ export default function AdminApp() {
       return;
     }
     setAddDraft({ name: "", city: "", group: "", phone: "", email: "", relation: "", invited: {} });
-    setShowAddGuest(false);
     loadGuests();
   }
 
@@ -474,148 +503,8 @@ export default function AdminApp() {
             </div>
           </div>
 
-          <div className="mb-6 bg-creamCard border border-border rounded-sm p-5">
-            <div className="text-[15.5px] text-inkSoft font-medium mb-1">
-              Manage event guest lists
-            </div>
-            <div className="text-[14px] text-inkMuted mb-3">
-              See who&apos;s invited to an event, and add or remove guests from it.
-            </div>
-            <select
-              value={manageEvent}
-              onChange={(e) => {
-                setManageEvent(e.target.value as EventKey | "");
-                setAddToEventSearch("");
-              }}
-              className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
-            >
-              <option value="">Choose an event…</option>
-              {EVENT_KEYS.map((key) => (
-                <option key={key} value={key}>
-                  {EVENT_MAP[key].name}
-                </option>
-              ))}
-            </select>
-
-            {manageEvent &&
-              (() => {
-                const invitedList = rows
-                  .filter((r) => r.invited.includes(manageEvent))
-                  .sort((a, b) => a.name.localeCompare(b.name));
-                const q = addToEventSearch.trim().toLowerCase();
-                const candidates = q
-                  ? rows
-                      .filter((r) => !r.invited.includes(manageEvent) && r.name.toLowerCase().includes(q))
-                      .slice(0, 30)
-                  : [];
-                return (
-                  <div className="grid gap-5 mt-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
-                    <div>
-                      <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
-                        Invited ({invitedList.length})
-                      </div>
-                      <div className="max-h-[320px] overflow-y-auto flex flex-col gap-1.5 pr-1">
-                        {invitedList.length === 0 && (
-                          <div className="text-[14.5px] text-inkMuted">No one invited yet.</div>
-                        )}
-                        {invitedList.map((r) => (
-                          <div
-                            key={r.id}
-                            className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-parchment rounded-sm text-[14.5px] text-inkSoft"
-                          >
-                            <span>{r.name}</span>
-                            <button
-                              onClick={() => setEventInvite(r, manageEvent, false)}
-                              disabled={invitingId === r.id}
-                              className="shrink-0 px-2 py-1 bg-transparent border border-maroonHover rounded-[2px] text-maroonHover text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
-                        Add a guest
-                      </div>
-                      <input
-                        value={addToEventSearch}
-                        onChange={(e) => setAddToEventSearch(e.target.value)}
-                        placeholder="Search by name"
-                        className="w-full p-2.5 mb-2 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
-                      />
-                      <div className="max-h-[280px] overflow-y-auto flex flex-col gap-1.5 pr-1">
-                        {!q && (
-                          <div className="text-[14.5px] text-inkMuted">
-                            Type a name to find a guest to add.
-                          </div>
-                        )}
-                        {q && candidates.length === 0 && (
-                          <div className="text-[14.5px] text-inkMuted">No matching guests.</div>
-                        )}
-                        {candidates.map((r) => (
-                          <div
-                            key={r.id}
-                            className="flex items-center justify-between gap-2 px-2.5 py-1.5 border border-border rounded-sm text-[14.5px] text-inkSoft"
-                          >
-                            <span>{r.name}</span>
-                            <button
-                              onClick={() => setEventInvite(r, manageEvent, true)}
-                              disabled={invitingId === r.id}
-                              className="shrink-0 px-2 py-1 bg-maroon text-cream border-none rounded-[2px] text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
-                            >
-                              Add
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-          </div>
-
-          <div className="flex gap-3 flex-wrap items-center mb-4">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, group, city, code"
-              className="flex-1 min-w-[220px] px-[13px] py-[11px] border border-borderInput rounded-[2px] bg-creamCard text-ink"
-            />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="p-[11px] border border-borderInput rounded-[2px] bg-creamCard text-ink"
-            >
-              <option value="all">All guests</option>
-              <option value="answered">Answered</option>
-              <option value="waiting">Not answered</option>
-              <option value="room">Has a room</option>
-              <option value="dj">DJ Night list</option>
-            </select>
-            <button
-              onClick={copyCodes}
-              className="px-[18px] py-[11px] bg-transparent border border-maroon rounded-[2px] text-maroon text-sm tracking-[.16em] uppercase cursor-pointer"
-            >
-              {copied ? "Copied" : "Copy name + code"}
-            </button>
-            <a
-              href="/api/admin/export"
-              className="px-[18px] py-[11px] bg-maroon text-cream border-none rounded-[2px] text-sm tracking-[.16em] uppercase no-underline"
-            >
-              Export CSV
-            </a>
-            <button
-              onClick={() => setShowAddGuest((s) => !s)}
-              className="px-[18px] py-[11px] bg-transparent border border-maroon rounded-[2px] text-maroon text-sm tracking-[.16em] uppercase cursor-pointer"
-            >
-              {showAddGuest ? "Cancel" : "+ Add guest"}
-            </button>
-          </div>
-
-          {showAddGuest && (
-            <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
+          <Collapsible title="Add &amp; manage invites" subtitle="Add a new guest, or add/remove guests from one event's list.">
+            <div className="mb-5">
               <div className="text-[15.5px] text-inkSoft font-medium mb-3">Add a new guest</div>
               <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))" }}>
                 <input
@@ -687,116 +576,252 @@ export default function AdminApp() {
                 {addSaving ? "Adding…" : "Add guest"}
               </button>
             </div>
-          )}
 
-          <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
-            <div className="text-[15.5px] text-inkSoft font-medium mb-1">Reminder message</div>
-            <div className="text-[14px] text-inkMuted mb-3">
-              Choose a starting point, then edit freely. This is what every WhatsApp{" "}
-              <strong className="text-maroon font-medium">Remind</strong> link below sends -
-              per guest, per event, or in bulk. Use <code>{"{name}"}</code> and <code>{"{code}"}</code>{" "}
-              to insert a guest&apos;s first name and invite code.
-            </div>
-            <div className="flex flex-wrap gap-3 mb-3">
+            <div className="pt-4 border-t border-border">
+              <div className="text-[15.5px] text-inkSoft font-medium mb-1">
+                Manage event guest lists
+              </div>
+              <div className="text-[14px] text-inkMuted mb-3">
+                See who&apos;s invited to an event, and add or remove guests from it.
+              </div>
               <select
-                value={messageType}
-                onChange={(e) => changeMessageType(e.target.value as MessageType)}
+                value={manageEvent}
+                onChange={(e) => {
+                  setManageEvent(e.target.value as EventKey | "");
+                  setAddToEventSearch("");
+                }}
                 className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
               >
-                {MESSAGE_TYPES.map((t) => (
-                  <option key={t.key} value={t.key}>
-                    {t.label}
+                <option value="">Choose an event…</option>
+                {EVENT_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {EVENT_MAP[key].name}
                   </option>
                 ))}
               </select>
-              {messageType === "event" && (
+
+              {manageEvent &&
+                (() => {
+                  const invitedList = rows
+                    .filter((r) => r.invited.includes(manageEvent))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                  const q = addToEventSearch.trim().toLowerCase();
+                  const candidates = q
+                    ? rows
+                        .filter((r) => !r.invited.includes(manageEvent) && r.name.toLowerCase().includes(q))
+                        .slice(0, 30)
+                    : [];
+                  return (
+                    <div className="grid gap-5 mt-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
+                          Invited ({invitedList.length})
+                        </div>
+                        <div className="max-h-[320px] overflow-y-auto flex flex-col gap-1.5 pr-1">
+                          {invitedList.length === 0 && (
+                            <div className="text-[14.5px] text-inkMuted">No one invited yet.</div>
+                          )}
+                          {invitedList.map((r) => (
+                            <div
+                              key={r.id}
+                              className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-parchment rounded-sm text-[14.5px] text-inkSoft"
+                            >
+                              <span>{r.name}</span>
+                              <button
+                                onClick={() => setEventInvite(r, manageEvent, false)}
+                                disabled={invitingId === r.id}
+                                className="shrink-0 px-2 py-1 bg-transparent border border-maroonHover rounded-[2px] text-maroonHover text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm tracking-[.14em] uppercase text-inkMuted mb-2">
+                          Add a guest
+                        </div>
+                        <input
+                          value={addToEventSearch}
+                          onChange={(e) => setAddToEventSearch(e.target.value)}
+                          placeholder="Search by name"
+                          className="w-full p-2.5 mb-2 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+                        />
+                        <div className="max-h-[280px] overflow-y-auto flex flex-col gap-1.5 pr-1">
+                          {!q && (
+                            <div className="text-[14.5px] text-inkMuted">
+                              Type a name to find a guest to add.
+                            </div>
+                          )}
+                          {q && candidates.length === 0 && (
+                            <div className="text-[14.5px] text-inkMuted">No matching guests.</div>
+                          )}
+                          {candidates.map((r) => (
+                            <div
+                              key={r.id}
+                              className="flex items-center justify-between gap-2 px-2.5 py-1.5 border border-border rounded-sm text-[14.5px] text-inkSoft"
+                            >
+                              <span>{r.name}</span>
+                              <button
+                                onClick={() => setEventInvite(r, manageEvent, true)}
+                                disabled={invitingId === r.id}
+                                className="shrink-0 px-2 py-1 bg-maroon text-cream border-none rounded-[2px] text-[12px] tracking-[.1em] uppercase cursor-pointer disabled:opacity-60"
+                              >
+                                Add
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+            </div>
+          </Collapsible>
+
+          <Collapsible title="Send reminders" subtitle="Compose a WhatsApp message, pick guests, and send.">
+            <div className="mb-4">
+              <div className="text-[15.5px] text-inkSoft font-medium mb-1">Reminder message</div>
+              <div className="text-[14px] text-inkMuted mb-3">
+                Choose a starting point, then edit freely. This is what every WhatsApp{" "}
+                <strong className="text-maroon font-medium">Remind</strong> link below sends -
+                per guest, per event, or in bulk. Use <code>{"{name}"}</code> and <code>{"{code}"}</code>{" "}
+                to insert a guest&apos;s first name and invite code.
+              </div>
+              <div className="flex flex-wrap gap-3 mb-3">
                 <select
-                  value={messageEvent}
-                  onChange={(e) => changeMessageEvent(e.target.value as EventKey | "")}
+                  value={messageType}
+                  onChange={(e) => changeMessageType(e.target.value as MessageType)}
                   className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
                 >
-                  <option value="">Choose an event…</option>
-                  {EVENT_KEYS.map((key) => (
-                    <option key={key} value={key}>
-                      {EVENT_MAP[key].name}
+                  {MESSAGE_TYPES.map((t) => (
+                    <option key={t.key} value={t.key}>
+                      {t.label}
                     </option>
                   ))}
                 </select>
+                {messageType === "event" && (
+                  <select
+                    value={messageEvent}
+                    onChange={(e) => changeMessageEvent(e.target.value as EventKey | "")}
+                    className="p-[11px] border border-borderInput rounded-[2px] bg-white text-ink"
+                  >
+                    <option value="">Choose an event…</option>
+                    {EVENT_KEYS.map((key) => (
+                      <option key={key} value={key}>
+                        {EVENT_MAP[key].name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <textarea
+                value={messageDraft}
+                onChange={(e) => setMessageDraft(e.target.value)}
+                rows={3}
+                placeholder={messageType === "custom" ? "Write your message… use {name} and {code} as placeholders." : ""}
+                className="w-full p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
+              />
+            </div>
+
+            <div className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3.5 bg-parchment border border-border rounded-sm">
+              <div className="text-[15.5px] text-inkSoft font-medium">
+                {selectedIds.size > 0 ? `${selectedIds.size} guest${selectedIds.size === 1 ? "" : "s"} selected` : "Select guests below to send reminders"}
+              </div>
+              <button
+                onClick={selectPending}
+                className="px-3.5 py-2 bg-transparent border border-maroon rounded-[2px] text-maroon text-[13px] tracking-[.1em] uppercase cursor-pointer"
+              >
+                Select all pending
+              </button>
+              {selectedIds.size > 0 && (
+                <>
+                  <button
+                    onClick={() => setShowReminders((s) => !s)}
+                    className="px-3.5 py-2 bg-maroon text-cream border-none rounded-[2px] text-[13px] tracking-[.1em] uppercase cursor-pointer"
+                  >
+                    {showReminders ? "Hide reminders" : `Send reminders (${selectedIds.size})`}
+                  </button>
+                  <button
+                    onClick={clearSelection}
+                    className="px-3.5 py-2 bg-transparent border border-borderInput rounded-[2px] text-inkSoft text-[13px] tracking-[.1em] uppercase cursor-pointer"
+                  >
+                    Clear selection
+                  </button>
+                </>
               )}
             </div>
-            <textarea
-              value={messageDraft}
-              onChange={(e) => setMessageDraft(e.target.value)}
-              rows={3}
-              placeholder={messageType === "custom" ? "Write your message… use {name} and {code} as placeholders." : ""}
-              className="w-full p-2.5 border border-borderInput rounded-[2px] bg-white text-ink text-[14.5px]"
-            />
-          </div>
 
-          <div className="mb-4 flex flex-wrap items-center gap-3 px-4 py-3.5 bg-parchment border border-border rounded-sm">
-            <div className="text-[15.5px] text-inkSoft font-medium">
-              {selectedIds.size > 0 ? `${selectedIds.size} guest${selectedIds.size === 1 ? "" : "s"} selected` : "Select guests below to send reminders"}
-            </div>
-            <button
-              onClick={selectPending}
-              className="px-3.5 py-2 bg-transparent border border-maroon rounded-[2px] text-maroon text-[13px] tracking-[.1em] uppercase cursor-pointer"
-            >
-              Select all pending
-            </button>
-            {selectedIds.size > 0 && (
-              <>
-                <button
-                  onClick={() => setShowReminders((s) => !s)}
-                  className="px-3.5 py-2 bg-maroon text-cream border-none rounded-[2px] text-[13px] tracking-[.1em] uppercase cursor-pointer"
-                >
-                  {showReminders ? "Hide reminders" : `Send reminders (${selectedIds.size})`}
-                </button>
-                <button
-                  onClick={clearSelection}
-                  className="px-3.5 py-2 bg-transparent border border-borderInput rounded-[2px] text-inkSoft text-[13px] tracking-[.1em] uppercase cursor-pointer"
-                >
-                  Clear selection
-                </button>
-              </>
-            )}
-          </div>
-
-          {showReminders && selectedGuests.length > 0 && (
-            <div className="mb-4 bg-creamCard border border-border rounded-sm p-5">
-              <div className="text-[15.5px] text-inkSoft font-medium mb-1">Send WhatsApp messages</div>
-              <div className="text-[14px] text-inkMuted mb-4">
-                Each button opens WhatsApp with the message above pre-filled for that guest - you still
-                tap send yourself in WhatsApp. Guests with no phone number on file are skipped.
-              </div>
-              <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
-                {selectedGuests.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between gap-3 px-3 py-2 bg-parchment rounded-sm text-[14.5px] text-inkSoft"
-                  >
-                    <span>
-                      {r.name}
-                      {!r.phone && <span className="text-inkMuted"> — no phone on file</span>}
-                    </span>
-                    {r.phone ? (
-                      <a
-                        href={whatsappLink(r.phone, messageDraft, r.name, r.code)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shrink-0 px-3 py-1.5 bg-[#2E7D5B] text-cream border-none rounded-[2px] text-[12.5px] tracking-[.1em] uppercase no-underline"
-                      >
-                        WhatsApp
-                      </a>
-                    ) : (
-                      <span className="shrink-0 px-3 py-1.5 text-[12.5px] tracking-[.1em] uppercase text-inkMuted">
-                        Skipped
+            {showReminders && selectedGuests.length > 0 && (
+              <div className="bg-parchment border border-border rounded-sm p-4">
+                <div className="text-[15.5px] text-inkSoft font-medium mb-1">Send WhatsApp messages</div>
+                <div className="text-[14px] text-inkMuted mb-4">
+                  Each button opens WhatsApp with the message above pre-filled for that guest - you still
+                  tap send yourself in WhatsApp. Guests with no phone number on file are skipped.
+                </div>
+                <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto pr-1">
+                  {selectedGuests.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between gap-3 px-3 py-2 bg-creamCard rounded-sm text-[14.5px] text-inkSoft"
+                    >
+                      <span>
+                        {r.name}
+                        {!r.phone && <span className="text-inkMuted"> — no phone on file</span>}
                       </span>
-                    )}
-                  </div>
-                ))}
+                      {r.phone ? (
+                        <a
+                          href={whatsappLink(r.phone, messageDraft, r.name, r.code)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="shrink-0 px-3 py-1.5 bg-[#2E7D5B] text-cream border-none rounded-[2px] text-[12.5px] tracking-[.1em] uppercase no-underline"
+                        >
+                          WhatsApp
+                        </a>
+                      ) : (
+                        <span className="shrink-0 px-3 py-1.5 text-[12.5px] tracking-[.1em] uppercase text-inkMuted">
+                          Skipped
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </Collapsible>
+
+          <div className="flex gap-3 flex-wrap items-center mb-4">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, group, city, code"
+              className="flex-1 min-w-[220px] px-[13px] py-[11px] border border-borderInput rounded-[2px] bg-creamCard text-ink"
+            />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="p-[11px] border border-borderInput rounded-[2px] bg-creamCard text-ink"
+            >
+              <option value="all">All guests</option>
+              <option value="answered">Answered</option>
+              <option value="waiting">Not answered</option>
+              <option value="room">Has a room</option>
+              <option value="dj">DJ Night list</option>
+            </select>
+            <button
+              onClick={copyCodes}
+              className="px-[18px] py-[11px] bg-transparent border border-maroon rounded-[2px] text-maroon text-sm tracking-[.16em] uppercase cursor-pointer"
+            >
+              {copied ? "Copied" : "Copy name + code"}
+            </button>
+            <a
+              href="/api/admin/export"
+              className="px-[18px] py-[11px] bg-maroon text-cream border-none rounded-[2px] text-sm tracking-[.16em] uppercase no-underline"
+            >
+              Export CSV
+            </a>
+          </div>
 
           <div className="mb-4 px-4 py-3.5 bg-parchment border border-border rounded-sm text-[15.5px] text-inkMuted leading-relaxed">
             Every guest&apos;s invite code sits in the <strong className="text-maroon font-medium">Code</strong>{" "}
