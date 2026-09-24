@@ -560,7 +560,7 @@ export default function GuestApp({
         )}
       </div>
 
-      <Footer content={content} />
+      <Footer content={content} showStay={showStay} />
 
       {selEv && (
         <div

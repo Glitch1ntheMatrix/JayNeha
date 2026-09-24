@@ -16,7 +16,13 @@ function Paragraphs({ text }: { text: string }) {
   );
 }
 
-export default function Footer({ content }: { content: SiteContent }) {
+export default function Footer({
+  content,
+  showStay = true,
+}: {
+  content: SiteContent;
+  showStay?: boolean;
+}) {
   return (
     <div className="max-w-[1160px] mx-auto px-[22px] mt-16 pb-14">
       <div className="grid gap-9 md:gap-[clamp(24px,4vw,48px)]" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
@@ -26,12 +32,14 @@ export default function Footer({ content }: { content: SiteContent }) {
           </div>
           <Paragraphs text={content.getting_there.body} />
         </div>
-        <div>
-          <div className="font-display text-[21px] text-maroon mb-2.5">
-            {content.where_to_stay.title}
+        {showStay && (
+          <div>
+            <div className="font-display text-[21px] text-maroon mb-2.5">
+              {content.where_to_stay.title}
+            </div>
+            <Paragraphs text={content.where_to_stay.body} />
           </div>
-          <Paragraphs text={content.where_to_stay.body} />
-        </div>
+        )}
         <div>
           <div className="font-display text-[21px] text-maroon mb-2.5">
             {content.our_story.title}
