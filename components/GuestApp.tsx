@@ -88,6 +88,11 @@ export default function GuestApp({
   const pendingCount = guest.invitedEvents.length - confirmedEvents.length - declinedCount;
   const answeredCount = guest.invitedEvents.filter((k) => guest.rsvp.events[k]).length;
   const firstName = guest.name.split(" ")[0];
+  // The resort stay starts with check-in on 11 Dec, so guests invited only to
+  // the 12 Dec wedding day don't get the stay card unless a host gave them a room.
+  const hasRevealedRoom = guest.roomsRevealed && Boolean(guest.room);
+  const showStay =
+    hasRevealedRoom || myEvents.some((ev) => ev.dateFull.startsWith("11 December"));
 
   function openEnvelope(key: EventKey) {
     setCardPage(0);
@@ -344,6 +349,7 @@ export default function GuestApp({
         </div>
       </div>
 
+      {showStay && (
       <div className="max-w-[1160px] mx-auto px-[22px] mt-14">
         <div
           className="rounded p-6 md:p-[clamp(26px,4vw,42px)] relative overflow-hidden"
@@ -356,7 +362,7 @@ export default function GuestApp({
           <div className="text-sm tracking-[.3em] uppercase" style={{ color: "#E1B45E" }}>
             Your stay at Ikshana Resort, Lonavala
           </div>
-          {guest.roomsRevealed && guest.room ? (
+          {hasRevealedRoom && guest.room ? (
             <div
               className="grid gap-6 mt-6 relative items-start"
               style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}
@@ -396,6 +402,7 @@ export default function GuestApp({
           )}
         </div>
       </div>
+      )}
 
       <div className="max-w-[1160px] mx-auto px-[22px] mt-16">
         <h2 className="font-display text-[clamp(27px,3.6vw,38px)] text-maroon font-normal mb-6 mt-3">
