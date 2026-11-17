@@ -7,7 +7,7 @@ export const EVENTS: EventDef[] = [
     dateLabel: "Fri 4 Dec",
     dateFull: "04 December, Friday 2026",
     time: "6:00 PM onwards",
-    venue: "Iskon",
+    venue: "ISKCON, BV Hall, Ground Floor",
     place: "Chowpatty (South Mumbai)",
     card: "/cards/kirtan.jpg",
     thumb: "/cards/thumbs/kirtan.jpg",
