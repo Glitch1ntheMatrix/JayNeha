@@ -4,9 +4,9 @@ export const EVENTS: EventDef[] = [
   {
     key: "kirtan",
     name: "Kirtan",
-    dateLabel: "Sat 5 Dec",
-    dateFull: "05 December, Saturday 2026",
-    time: "6:00 PM – 9:00 PM",
+    dateLabel: "Fri 4 Dec",
+    dateFull: "04 December, Friday 2026",
+    time: "6:00 PM onwards",
     venue: "Iskon Temple",
     place: "Chowpatty, Mumbai",
     card: "/cards/kirtan.jpg",
