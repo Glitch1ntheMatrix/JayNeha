@@ -17,7 +17,7 @@ export const DEFAULT_CONTENT: SiteContent = {
   getting_there: {
     title: "Getting there",
     body:
-      "The Mumbai events sit within the city: Iskon Temple at Chowpatty, Soho Club in Juhu, and Karl Residency in Andheri. Allow extra time for evening traffic.\n\nIkshana Resort, Lonavala is about two and a half hours from Mumbai by road. Tell us in the form above if you would like help with travel.",
+      "The Mumbai events sit within the city: Iskon at Chowpatty, Soho Club in Juhu, and Karl Residency in Andheri. Allow extra time for evening traffic.\n\nIkshana Resort, Lonavala is about two and a half hours from Mumbai by road. Tell us in the form above if you would like help with travel.",
   },
   where_to_stay: {
     title: "Where to stay",
