@@ -10,28 +10,44 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function postLogin() {
+    return fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, code }),
+    });
+  }
+
   async function submit() {
     if (loading) return;
     setLoading(true);
     setError("");
+    let res: Response;
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, code }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Something went wrong. Please try again.");
+      res = await postLogin();
+    } catch {
+      // A dropped connection on a phone or tablet is often momentary, so try once more.
+      try {
+        await new Promise((r) => setTimeout(r, 1200));
+        res = await postLogin();
+      } catch {
+        setError("Could not reach the server. Please check your connection and try again.");
         setLoading(false);
         return;
       }
-      router.push("/home");
-      router.refresh();
-    } catch {
-      setError("Could not reach the server. Please check your connection and try again.");
-      setLoading(false);
     }
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      setError(
+        data?.error ||
+          `Something went wrong on our side (error ${res.status}). Please try again in a moment.`
+      );
+      setLoading(false);
+      return;
+    }
+    router.push("/home");
+    router.refresh();
   }
 
   return (
